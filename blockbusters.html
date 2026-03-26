@@ -164,45 +164,14 @@
     justify-items: center;
   }
 
-  .edge-strip { display: flex; }
+  .edge-strip { display: block; }
 
-  /* Left/right: vertical column of hexes with same column overlap */
-  .edge-strip.left  {
-    grid-column: 1; grid-row: 2;
-    flex-direction: column;
-    margin-right: -30px; /* overlap into grid */
-  }
-  .edge-strip.right {
-    grid-column: 3; grid-row: 2;
-    flex-direction: column;
-    margin-left: -30px;
-  }
-  .edge-strip.left .edge-hex,
-  .edge-strip.right .edge-hex {
-    margin-bottom: -2px;
-  }
+  .edge-strip.left   { grid-column: 1; grid-row: 2; margin-right: -30px; z-index: 1; }
+  .edge-strip.right  { grid-column: 3; grid-row: 2; margin-left:  -30px; z-index: 1; }
+  .edge-strip.top    { grid-column: 2; grid-row: 1; margin-bottom: -26px; z-index: 1; }
+  .edge-strip.bottom { grid-column: 2; grid-row: 3; margin-top:   -26px; z-index: 1; }
 
-  /* Top/bottom: horizontal row of hexes with same row overlap */
-  .edge-strip.top   {
-    grid-column: 2; grid-row: 1;
-    flex-direction: row;
-    margin-bottom: -26px;
-  }
-  .edge-strip.bottom {
-    grid-column: 2; grid-row: 3;
-    flex-direction: row;
-    margin-top: -26px;
-  }
-  .edge-strip.top .edge-hex,
-  .edge-strip.bottom .edge-hex {
-    margin-right: -30px;
-  }
-  .edge-strip.top .edge-hex:last-child,
-  .edge-strip.bottom .edge-hex:last-child {
-    margin-right: 0;
-  }
-
-  .hex-grid { grid-column: 2; grid-row: 2; }
+  .hex-grid { grid-column: 2; grid-row: 2; z-index: 2; }
 
   /* Edge hexes — same size as board hexes */
   .edge-hex {
@@ -997,26 +966,48 @@ function buildBoard() {
   buildEdgeStrips();
 }
 
+const HEX_W = 104, HEX_H = 90, COL_OFFSET = 45, ROW_OVERLAP = 30;
+
 function buildEdgeStrips() {
-  // White top/bottom: one hex per column (same column count)
-  ['edgeTop', 'edgeBottom'].forEach(id => {
+  // White top/bottom: one hex per column, alternating vertical offset to match column stagger
+  ['edgeTop', 'edgeBottom'].forEach((id, side) => {
     const el = document.getElementById(id);
     el.innerHTML = '';
+    el.style.position = 'relative';
+    el.style.height = (HEX_H + COL_OFFSET) + 'px';
+    el.style.width = (COLS * (HEX_W - ROW_OVERLAP) + ROW_OVERLAP) + 'px';
     for (let c = 0; c < COLS; c++) {
       const h = document.createElement('div');
       h.className = 'edge-hex white';
       h.innerHTML = edgeHexSVG('white');
+      const isEven = c % 2 === 1;
+      const x = c * (HEX_W - ROW_OVERLAP);
+      // Even columns offset down (matching board); top strip flips for bottom
+      const y = side === 0
+        ? (isEven ? COL_OFFSET : 0)       // top: odd cols raised, even cols dropped
+        : (isEven ? 0 : COL_OFFSET);      // bottom: mirror
+      h.style.position = 'absolute';
+      h.style.left = x + 'px';
+      h.style.top = y + 'px';
       el.appendChild(h);
     }
   });
-  // Blue left/right: one hex per row (same row count)
+
+  // Blue left/right: ROWS+1 hexes, offset like an even column (shifted down by half)
   ['edgeLeft', 'edgeRight'].forEach(id => {
     const el = document.getElementById(id);
     el.innerHTML = '';
-    for (let r = 0; r < ROWS; r++) {
+    el.style.position = 'relative';
+    el.style.width = HEX_W + 'px';
+    const count = ROWS + 1;
+    el.style.height = (count * (HEX_H - 2) - 2) + 'px';
+    for (let r = 0; r < count; r++) {
       const h = document.createElement('div');
       h.className = 'edge-hex blue';
       h.innerHTML = edgeHexSVG('blue');
+      h.style.position = 'absolute';
+      h.style.left = '0';
+      h.style.top = (r * (HEX_H - 2)) + 'px';
       el.appendChild(h);
     }
   });
