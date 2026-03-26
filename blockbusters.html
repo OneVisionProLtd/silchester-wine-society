@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BLOCKBUSTERS — Silchester Wine Society</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Bebas+Neue&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --hex-gold: #D4A020;
+    --hex-gold-light: #E8C84A;
+    --hex-gold-dark: #A07818;
+    --hex-gold-border: #8B6914;
+    --hex-gold-shine: #F0D860;
+    --blue-team: #2196F3;
+    --blue-fill: #1976D2;
+    --blue-light: #64B5F6;
+    --blue-border: #0D47A1;
+    --white-team: #ECEFF1;
+    --white-fill: #FFFFFF;
+    --white-border: #B0BEC5;
+    --bg-main: #A0A0A0;
+    --bg-dark: #707070;
+    --letter-dark: #2C2000;
+    --panel-dark: #1a1a2e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg-main);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    user-select: none;
+  }
+
+  .app {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ===== TOP BAR ===== */
+  .top-bar {
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+    padding: 8px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 3px solid #0f3460;
+    z-index: 10;
+  }
+
+  .top-bar h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2em;
+    letter-spacing: 6px;
+    color: var(--hex-gold-light);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  }
+
+  .top-bar .wine-badge {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.72em;
+    padding: 4px 14px;
+    background: rgba(212, 160, 32, 0.15);
+    border: 1px solid rgba(212, 160, 32, 0.3);
+    border-radius: 20px;
+    color: var(--hex-gold-light);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ===== SCOREBOARD ===== */
+  .scoreboard {
+    background: linear-gradient(180deg, #16213e 0%, #1a1a2e 100%);
+    padding: 6px 40px 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+  }
+
+  .team-panel {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .team-colour-block {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    border: 2px solid rgba(255,255,255,0.3);
+  }
+
+  .team-colour-block.blue { background: var(--blue-fill); }
+  .team-colour-block.white { background: var(--white-fill); }
+
+  .team-info {
+    text-align: left;
+  }
+
+  .team-name-display {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1em;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .team-name-display:hover { color: var(--hex-gold-light); }
+
+  .team-direction {
+    font-size: 0.62em;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 1px;
+  }
+
+  .team-score-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.4em;
+    color: var(--hex-gold-light);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    min-width: 30px;
+    text-align: center;
+  }
+
+  .team-panel.active .team-name-display {
+    color: var(--hex-gold-light);
+  }
+
+  .vs-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4em;
+    color: rgba(255,255,255,0.2);
+    letter-spacing: 3px;
+  }
+
+  /* ===== GAME BOARD ===== */
+  .board-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: var(--bg-main);
+    /* Subtle texture */
+    background-image: 
+      radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 60%, rgba(0,0,0,0.05) 0%, transparent 50%);
+  }
+
+  /* Edge indicators */
+  .edge-strip {
+    position: absolute;
+    z-index: 2;
+  }
+
+  .edge-strip.top, .edge-strip.bottom {
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 4px;
+  }
+
+  .edge-strip.top { top: 8px; }
+  .edge-strip.bottom { bottom: 8px; }
+
+  .edge-strip.left, .edge-strip.right {
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .edge-strip.left { left: 8px; }
+  .edge-strip.right { right: 8px; }
+
+  .edge-hex {
+    width: 30px;
+    height: 34px;
+    position: relative;
+  }
+
+  .edge-hex svg { width: 100%; height: 100%; }
+
+  .edge-hex.blue polygon { fill: var(--blue-fill); stroke: var(--blue-border); stroke-width: 2; }
+  .edge-hex.white polygon { fill: var(--white-fill); stroke: var(--white-border); stroke-width: 2; }
+
+  /* ===== HEX GRID ===== */
+  .hex-grid {
+    position: relative;
+    z-index: 5;
+  }
+
+  .hex-row {
+    display: flex;
+    justify-content: center;
+    margin-top: -26px;
+  }
+
+  .hex-row:first-child { margin-top: 0; }
+
+  .hex-row:nth-child(even) {
+    margin-left: 49px;
+  }
+
+  .hexagon {
+    width: 94px;
+    height: 104px;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.15s ease, filter 0.15s ease;
+    margin: 0 -1px;
+    filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.25));
+  }
+
+  .hexagon:hover {
+    transform: scale(1.08);
+    filter: drop-shadow(3px 5px 8px rgba(0,0,0,0.5));
+    z-index: 10;
+  }
+
+  .hexagon:active {
+    transform: scale(0.97);
+  }
+
+  .hexagon svg {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0; left: 0;
+  }
+
+  /* Default gold hex */
+  .hexagon.default .hex-bg { fill: var(--hex-gold); }
+  .hexagon.default .hex-border { fill: var(--hex-gold-dark); }
+  .hexagon.default .hex-shine { fill: var(--hex-gold-light); opacity: 0.6; }
+  .hexagon.default .hex-inner { fill: var(--hex-gold); }
+
+  /* Blue claimed */
+  .hexagon.blue .hex-bg { fill: var(--blue-fill); }
+  .hexagon.blue .hex-border { fill: var(--blue-border); }
+  .hexagon.blue .hex-shine { fill: var(--blue-light); opacity: 0.5; }
+  .hexagon.blue .hex-inner { fill: var(--blue-fill); }
+  .hexagon.blue .hex-letter { color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+
+  /* White claimed */
+  .hexagon.white .hex-bg { fill: #e8e8e8; }
+  .hexagon.white .hex-border { fill: #b0b0b0; }
+  .hexagon.white .hex-shine { fill: #ffffff; opacity: 0.7; }
+  .hexagon.white .hex-inner { fill: #f5f5f5; }
+  .hexagon.white .hex-letter { color: #333; text-shadow: none; }
+
+  .hex-letter {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Oswald', sans-serif;
+    font-size: 2em;
+    font-weight: 700;
+    color: var(--letter-dark);
+    pointer-events: none;
+    z-index: 3;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.3);
+  }
+
+  /* Hex claimed animation */
+  .hexagon.just-claimed {
+    animation: hexPop 0.4s ease-out;
+  }
+
+  @keyframes hexPop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+
+  /* ===== QUESTION OVERLAY ===== */
+  .question-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 100;
+    background: rgba(10, 10, 30, 0.93);
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s;
+  }
+
+  .question-overlay.active { display: flex; }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .question-panel {
+    width: 88%;
+    max-width: 860px;
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+    border: 3px solid var(--hex-gold-dark);
+    border-radius: 16px;
+    padding: 36px 44px;
+    text-align: center;
+    animation: panelSlide 0.3s ease-out;
+    box-shadow: 0 0 60px rgba(212, 160, 32, 0.15), 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  @keyframes panelSlide {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .q-letter-box {
+    display: inline-block;
+    width: 72px;
+    height: 80px;
+    position: relative;
+    margin-bottom: 18px;
+  }
+
+  .q-letter-box svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .q-letter-box .q-letter-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Oswald', sans-serif;
+    font-size: 2.2em;
+    font-weight: 700;
+    color: var(--letter-dark);
+  }
+
+  .q-prompt {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85em;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .q-text {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.55em;
+    font-weight: 500;
+    line-height: 1.4;
+    color: #fff;
+    margin-bottom: 28px;
+    min-height: 70px;
+  }
+
+  .q-answer-section {
+    display: none;
+    animation: fadeIn 0.3s;
+  }
+
+  .q-answer-section.visible { display: block; }
+
+  .q-answer-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.4em;
+    color: var(--hex-gold-light);
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+    text-shadow: 0 2px 8px rgba(212, 160, 32, 0.3);
+  }
+
+  .q-fun-fact {
+    font-size: 0.88em;
+    color: rgba(255,255,255,0.5);
+    font-style: italic;
+    margin-bottom: 24px;
+    padding: 0 20px;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.95em;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 12px 28px;
+    border: 2px solid;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    color: #fff;
+  }
+
+  .btn:hover { transform: translateY(-1px); }
+  .btn:active { transform: translateY(1px); }
+
+  .btn-reveal {
+    border-color: var(--hex-gold);
+    color: var(--hex-gold-light);
+    background: rgba(212, 160, 32, 0.1);
+  }
+  .btn-reveal:hover {
+    background: rgba(212, 160, 32, 0.2);
+    box-shadow: 0 0 20px rgba(212, 160, 32, 0.2);
+  }
+
+  .btn-blue {
+    border-color: var(--blue-fill);
+    color: var(--blue-light);
+    background: rgba(33, 150, 243, 0.1);
+  }
+  .btn-blue:hover { background: rgba(33, 150, 243, 0.25); }
+
+  .btn-white {
+    border-color: #aaa;
+    color: #ccc;
+    background: rgba(255,255,255,0.05);
+  }
+  .btn-white:hover { background: rgba(255,255,255,0.12); }
+
+  .btn-skip {
+    border-color: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.35);
+    font-size: 0.8em;
+  }
+
+  /* ===== CONTROLS BAR ===== */
+  .controls-bar {
+    background: linear-gradient(180deg, #16213e, #1a1a2e);
+    padding: 8px 30px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    border-top: 3px solid #0f3460;
+  }
+
+  .ctrl-btn {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.68em;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 16px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    cursor: pointer;
+    background: rgba(255,255,255,0.03);
+    color: rgba(255,255,255,0.35);
+    transition: all 0.2s;
+  }
+
+  .ctrl-btn:hover {
+    border-color: var(--hex-gold);
+    color: var(--hex-gold-light);
+    background: rgba(212,160,32,0.05);
+  }
+
+  /* ===== WINNER BANNER ===== */
+  .winner-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 150;
+    background: rgba(10, 10, 30, 0.95);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  .winner-overlay.active { display: flex; }
+
+  .winner-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4em;
+    color: var(--hex-gold-light);
+    letter-spacing: 8px;
+    text-shadow: 0 0 30px rgba(212, 160, 32, 0.4);
+    animation: winPulse 1.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes winPulse {
+    from { text-shadow: 0 0 30px rgba(212, 160, 32, 0.4); }
+    to { text-shadow: 0 0 60px rgba(212, 160, 32, 0.8); }
+  }
+
+  .winner-sub {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.6em;
+    color: #fff;
+    letter-spacing: 3px;
+    margin: 10px 0 30px;
+  }
+
+  .confetti {
+    position: fixed;
+    border-radius: 2px;
+    z-index: 151;
+    animation: confettiFall 3s ease-in forwards;
+  }
+
+  @keyframes confettiFall {
+    0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ===== NAME EDIT OVERLAY ===== */
+  .name-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 200;
+    background: rgba(10,10,30,0.9);
+    align-items: center;
+    justify-content: center;
+  }
+
+  .name-overlay.active { display: flex; }
+
+  .name-box {
+    background: linear-gradient(180deg, #1a1a2e, #16213e);
+    border: 2px solid var(--hex-gold-dark);
+    border-radius: 12px;
+    padding: 28px 36px;
+    text-align: center;
+  }
+
+  .name-box label {
+    display: block;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.85em;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .name-box input {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.3em;
+    text-align: center;
+    background: rgba(255,255,255,0.05);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    color: #fff;
+    padding: 10px 20px;
+    outline: none;
+    width: 260px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .name-box input:focus { border-color: var(--hex-gold); }
+
+  .name-box .btn { margin-top: 14px; }
+
+  /* ===== WELCOME SCREEN ===== */
+  .welcome {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 300;
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .welcome.hidden { display: none; }
+
+  .welcome h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 5em;
+    letter-spacing: 12px;
+    color: var(--hex-gold-light);
+    text-shadow: 0 4px 20px rgba(212, 160, 32, 0.4);
+    margin-bottom: 6px;
+  }
+
+  .welcome .tagline {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.1em;
+    letter-spacing: 6px;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .welcome .wine-line {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.82em;
+    color: var(--hex-gold);
+    letter-spacing: 3px;
+    margin-bottom: 40px;
+  }
+
+  .welcome .start-btn {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5em;
+    letter-spacing: 6px;
+    padding: 16px 50px;
+    border: 3px solid var(--hex-gold);
+    border-radius: 8px;
+    cursor: pointer;
+    background: rgba(212, 160, 32, 0.1);
+    color: var(--hex-gold-light);
+    transition: all 0.3s;
+  }
+
+  .welcome .start-btn:hover {
+    background: rgba(212, 160, 32, 0.2);
+    box-shadow: 0 0 30px rgba(212, 160, 32, 0.3);
+    transform: scale(1.03);
+  }
+
+  /* Hex decoration on welcome */
+  .welcome-hex-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+
+  .welcome-hex {
+    width: 50px;
+    height: 56px;
+    position: relative;
+  }
+
+  .welcome-hex svg { width: 100%; height: 100%; }
+  .welcome-hex span {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.4em;
+    font-weight: 700;
+    color: var(--letter-dark);
+  }
+
+  /* Responsive */
+  @media (max-height: 700px) {
+    .hexagon { width: 78px; height: 86px; }
+    .hex-letter { font-size: 1.6em; }
+    .hex-row { margin-top: -22px; }
+    .hex-row:nth-child(even) { margin-left: 40px; }
+  }
+
+  @media (max-height: 600px) {
+    .hexagon { width: 66px; height: 73px; }
+    .hex-letter { font-size: 1.35em; }
+    .hex-row { margin-top: -18px; }
+    .hex-row:nth-child(even) { margin-left: 34px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SVG hex template (reusable) -->
+<svg style="position:absolute;width:0;height:0;">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E8C84A"/>
+      <stop offset="50%" style="stop-color:#D4A020"/>
+      <stop offset="100%" style="stop-color:#B8880C"/>
+    </linearGradient>
+    <linearGradient id="goldShine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#F0D860;stop-opacity:0.6"/>
+      <stop offset="100%" style="stop-color:#D4A020;stop-opacity:0"/>
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#42A5F5"/>
+      <stop offset="50%" style="stop-color:#1976D2"/>
+      <stop offset="100%" style="stop-color:#0D47A1"/>
+    </linearGradient>
+    <linearGradient id="whiteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF"/>
+      <stop offset="50%" style="stop-color:#F5F5F5"/>
+      <stop offset="100%" style="stop-color:#E0E0E0"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<!-- ===== WELCOME SCREEN ===== -->
+<div class="welcome" id="welcome">
+  <div class="welcome-hex-row" id="welcomeHexes"></div>
+  <h1>BLOCKBUSTERS</h1>
+  <div class="tagline">Silchester Wine Society</div>
+  <div class="wine-line">✦ Spring Flavours — AI Edition ✦</div>
+  <button class="start-btn" onclick="startGame()">START GAME</button>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div class="app" id="mainApp" style="display:none;">
+  <div class="top-bar">
+    <h1>BLOCKBUSTERS</h1>
+    <div class="wine-badge">✦ Spring Flavours — AI Wine Edition ✦</div>
+  </div>
+
+  <div class="scoreboard">
+    <div class="team-panel" id="bluePanel">
+      <div class="team-colour-block blue"></div>
+      <div class="team-info">
+        <div class="team-name-display" id="blueName" onclick="editTeamName('blue')">TEAM BLUE</div>
+        <div class="team-direction">◄ Left to Right ►</div>
+      </div>
+      <div class="team-score-num" id="blueScore">0</div>
+    </div>
+
+    <div class="vs-text">VS</div>
+
+    <div class="team-panel" id="whitePanel">
+      <div class="team-score-num" id="whiteScore">0</div>
+      <div class="team-info" style="text-align:right;">
+        <div class="team-name-display" id="whiteName" onclick="editTeamName('white')">TEAM WHITE</div>
+        <div class="team-direction">▲ Top to Bottom ▼</div>
+      </div>
+      <div class="team-colour-block white"></div>
+    </div>
+  </div>
+
+  <div class="board-area">
+    <!-- Blue edge strips (left & right for blue team's left-to-right path) -->
+    <div class="edge-strip left" id="edgeLeft"></div>
+    <div class="edge-strip right" id="edgeRight"></div>
+    <!-- White edge strips (top & bottom for white team's top-to-bottom path) -->
+    <div class="edge-strip top" id="edgeTop"></div>
+    <div class="edge-strip bottom" id="edgeBottom"></div>
+
+    <div class="hex-grid" id="hexGrid"></div>
+  </div>
+
+  <div class="controls-bar">
+    <button class="ctrl-btn" onclick="resetBoard()">New Board</button>
+    <button class="ctrl-btn" onclick="resetScores()">Reset All</button>
+    <button class="ctrl-btn" onclick="toggleTurn()">Switch Turn</button>
+  </div>
+</div>
+
+<!-- ===== QUESTION OVERLAY ===== -->
+<div class="question-overlay" id="questionOverlay">
+  <div class="question-panel">
+    <div class="q-letter-box">
+      <svg viewBox="0 0 80 90">
+        <polygon points="40,2 76,24 76,66 40,88 4,66 4,24" fill="url(#goldGrad)" stroke="#8B6914" stroke-width="3"/>
+        <polygon points="40,8 70,27 70,63 40,82 10,63 10,27" fill="url(#goldShine)" opacity="0.3"/>
+      </svg>
+      <span class="q-letter-text" id="qLetter">P</span>
+    </div>
+    <div class="q-prompt" id="qPrompt">What 'P' is...</div>
+    <div class="q-text" id="qText">Loading question...</div>
+
+    <button class="btn btn-reveal" id="revealBtn" onclick="revealAnswer()">REVEAL ANSWER</button>
+
+    <div class="q-answer-section" id="answerSection">
+      <div class="q-answer-text" id="answerText"></div>
+      <div class="q-fun-fact" id="answerFact"></div>
+      <div class="btn-row">
+        <button class="btn btn-blue" onclick="awardHex('blue')">✓ BLUE CORRECT</button>
+        <button class="btn btn-white" onclick="awardHex('white')">✓ WHITE CORRECT</button>
+        <button class="btn btn-skip" onclick="closeQuestion()">✗ NO ANSWER</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== WINNER OVERLAY ===== -->
+<div class="winner-overlay" id="winnerOverlay">
+  <div class="winner-title">🏆 BLOCKBUSTERS! 🏆</div>
+  <div class="winner-sub" id="winnerName"></div>
+  <div class="btn-row">
+    <button class="btn btn-reveal" onclick="closeWinner()">CONTINUE</button>
+    <button class="btn btn-blue" onclick="closeWinner(); resetBoard();">NEW ROUND</button>
+  </div>
+</div>
+
+<!-- ===== NAME EDIT ===== -->
+<div class="name-overlay" id="nameOverlay">
+  <div class="name-box">
+    <label id="nameLabel">Enter Team Name</label>
+    <input type="text" id="nameInput" maxlength="18" placeholder="Team name..." onkeydown="if(event.key==='Enter')confirmName()">
+    <br>
+    <button class="btn btn-reveal" onclick="confirmName()">CONFIRM</button>
+  </div>
+</div>
+
+<script>
+// ===================== WINE QUESTIONS =====================
+const wineQuestions = {
+  A: [
+    { q: "What 'A' is the Italian dried-grape wine style, famously from Valpolicella?", a: "Amarone", fact: "Grapes are dried for months on racks to concentrate the flavours." },
+    { q: "What 'A' is the major grape of Alsace also known as Klevner?", a: "Auxerrois", fact: "Often blended into Alsatian Pinot Blanc." },
+  ],
+  B: [
+    { q: "What 'B' is the famous French region known for Pinot Noir and Chardonnay, home to Beaune?", a: "Burgundy", fact: "Medieval monks mapped terroir by taste centuries before science caught up." },
+    { q: "What 'B' describes the biscuity flavour found in aged Champagne?", a: "Brioche", fact: "This comes from autolysis — dead yeast cells breaking down during ageing." },
+    { q: "What 'B' describes a wine with rich, full weight on the palate?", a: "Body", fact: "Alcohol, tannin, and extract all contribute to a wine's body." },
+  ],
+  C: [
+    { q: "What 'C' is the famous French region that produces the world's most celebrated sparkling wine?", a: "Champagne", fact: "Only sparkling wine from this specific region can legally use the name." },
+    { q: "What 'C' is the red Bordeaux grape often blended with Merlot, also hugely popular in Napa?", a: "Cabernet Sauvignon", fact: "It's a natural cross between Cabernet Franc and Sauvignon Blanc." },
+  ],
+  D: [
+    { q: "What 'D' means a wine with very little residual sugar?", a: "Dry", fact: "Most table wines ferment to dryness, with less than 4g/L residual sugar." },
+    { q: "What 'D' is the Portuguese valley famous for fortified Port wine?", a: "Douro", fact: "The Douro Valley is one of the oldest demarcated wine regions in the world." },
+  ],
+  E: [
+    { q: "What 'E' is the study and science of winemaking?", a: "Enology", fact: "Also spelled Oenology — from the Greek 'oinos' meaning wine." },
+    { q: "What 'E' refers to wine from grapes grown and bottled at a single property?", a: "Estate", fact: "Estate-bottled means the winery grew, produced, and bottled the wine." },
+  ],
+  F: [
+    { q: "What 'F' is the lingering taste that remains after you swallow wine?", a: "Finish", fact: "A long finish in a great wine can last 30 seconds or more." },
+    { q: "What 'F' is the process by which yeast converts grape sugar into alcohol?", a: "Fermentation", fact: "Pasteur was the first to prove yeast causes fermentation in the 1850s." },
+    { q: "What 'F' is the Italian term for a slightly sparkling wine?", a: "Frizzante", fact: "Prosecco comes in both Frizzante and Spumante styles." },
+  ],
+  G: [
+    { q: "What 'G' is a famous southern Rhône grape also known as Garnacha in Spain?", a: "Grenache", fact: "The key grape in Châteauneuf-du-Pape and Priorat." },
+    { q: "What 'G' is the aromatic Alsace grape known for lychee and rose petal notes?", a: "Gewürztraminer", fact: "Gewürz means 'spice' in German." },
+  ],
+  H: [
+    { q: "What 'H' is the term for the annual grape-picking season?", a: "Harvest", fact: "In the southern hemisphere, harvest runs from February to April." },
+  ],
+  I: [
+    { q: "What 'I' is the country that is both the largest wine producer and home to Sangiovese?", a: "Italy", fact: "Italy has over 500 officially recognised native grape varieties." },
+  ],
+  J: [
+    { q: "What 'J' is a large wine bottle equivalent to 4 standard bottles?", a: "Jeroboam", fact: "Named after a biblical king — the bigger the bottle, the slower the ageing." },
+  ],
+  K: [
+    { q: "What 'K' is the lightest German Prädikat wine classification?", a: "Kabinett", fact: "Kabinett wines are elegant and typically low in alcohol." },
+  ],
+  L: [
+    { q: "What 'L' is the sediment in winemaking that adds richness when stirred?", a: "Lees", fact: "Ageing 'sur lie' gives Muscadet its creamy texture." },
+  ],
+  M: [
+    { q: "What 'M' is the soft red Bordeaux grape dominant on the Right Bank?", a: "Merlot", fact: "Château Pétrus, one of the world's priciest wines, is nearly 100% Merlot." },
+    { q: "What 'M' is Argentina's signature red grape, originally from south-west France?", a: "Malbec", fact: "Malbec thrives at high altitude in Mendoza's vineyards." },
+  ],
+  N: [
+    { q: "What 'N' is the Italian grape behind Barolo, known as the 'king of grapes'?", a: "Nebbiolo", fact: "Named from 'nebbia' — the autumn fog that blankets Piedmont." },
+    { q: "What 'N' is the famous Californian valley synonymous with Cabernet Sauvignon?", a: "Napa", fact: "The 1976 Judgement of Paris put Napa on the world wine map." },
+  ],
+  O: [
+    { q: "What 'O' describes a style of winemaking with deliberate air exposure, as in the Jura?", a: "Oxidative", fact: "Vin Jaune develops a yeast 'voile' layer similar to fino Sherry." },
+  ],
+  P: [
+    { q: "What 'P' is the noble red grape of Burgundy, notoriously difficult to grow?", a: "Pinot Noir", fact: "Over 1,000 years of documented history in Burgundy." },
+    { q: "What 'P' is the fortified wine from the Douro Valley in Portugal?", a: "Port", fact: "Port was invented by adding brandy to preserve wine during shipping." },
+    { q: "What 'P' is the popular Italian sparkling wine from the Veneto?", a: "Prosecco", fact: "Made from Glera grapes using the tank method." },
+  ],
+  Q: [
+    { q: "What 'Q' is a term for a quality wine, from the French 'qualité'?", a: "Quality", fact: "EU wine law distinguishes between quality wine and table wine." },
+  ],
+  R: [
+    { q: "What 'R' is the French term for a pink wine, hugely popular in summer?", a: "Rosé", fact: "Provence produces about 40% of all French rosé." },
+    { q: "What 'R' is the aromatic white grape that produces both bone-dry and lusciously sweet wines?", a: "Riesling", fact: "Germany's noble grape, capable of ageing for decades." },
+  ],
+  S: [
+    { q: "What 'S' is the crisp white Bordeaux grape known for herbaceous character?", a: "Sauvignon Blanc", fact: "New Zealand's Marlborough is now the world benchmark." },
+    { q: "What 'S' is the grape behind Chianti and Brunello di Montalcino?", a: "Sangiovese", fact: "Its name means 'Blood of Jove' — the Roman king of gods." },
+  ],
+  T: [
+    { q: "What 'T' are the compounds from grape skins giving red wine its structure?", a: "Tannins", fact: "Tannins are a natural preservative — tannic reds age brilliantly." },
+    { q: "What 'T' is the French concept of soil, climate, and place that makes wine unique?", a: "Terroir", fact: "There's no direct English translation — it captures 'somewhereness'." },
+  ],
+  U: [
+    { q: "What 'U' describes a Chardonnay that hasn't been aged in oak barrels?", a: "Unoaked", fact: "Unoaked Chardonnay shows pure fruit without vanilla or toast." },
+  ],
+  V: [
+    { q: "What 'V' is the year in which grapes were harvested, printed on the label?", a: "Vintage", fact: "Most Champagne is non-vintage, blended from multiple years." },
+    { q: "What 'V' is the plant species that produces almost all wine grapes?", a: "Vitis Vinifera", fact: "Nearly all quality wine comes from this Mediterranean species." },
+  ],
+  W: [
+    { q: "What 'W' is the general term for the person who makes wine?", a: "Winemaker", fact: "In French, they're called a vigneron if they also grow the grapes." },
+  ],
+};
+
+// ===================== GAME STATE =====================
+const ROWS = 4, COLS = 5;
+let hexStates = {};
+let boardLetters = [];
+let currentTurn = 'blue';
+let currentHexId = null;
+let blueScore = 0, whiteScore = 0;
+let editingTeam = null;
+
+// ===================== HEX SVG BUILDER =====================
+function hexSVG(state) {
+  if (state === 'blue') {
+    return `<svg viewBox="0 0 100 110">
+      <polygon points="50,3 95,27 95,83 50,107 5,83 5,27" fill="#0D47A1" stroke="#0A3170" stroke-width="3"/>
+      <polygon points="50,10 88,30 88,80 50,100 12,80 12,30" fill="url(#blueGrad)"/>
+      <polygon points="50,10 88,30 88,55 50,55 12,55 12,30" fill="#64B5F6" opacity="0.2"/>
+    </svg>`;
+  }
+  if (state === 'white') {
+    return `<svg viewBox="0 0 100 110">
+      <polygon points="50,3 95,27 95,83 50,107 5,83 5,27" fill="#B0BEC5" stroke="#90A4AE" stroke-width="3"/>
+      <polygon points="50,10 88,30 88,80 50,100 12,80 12,30" fill="url(#whiteGrad)"/>
+      <polygon points="50,10 88,30 88,55 50,55 12,55 12,30" fill="#ffffff" opacity="0.3"/>
+    </svg>`;
+  }
+  // Default gold
+  return `<svg viewBox="0 0 100 110">
+    <polygon points="50,3 95,27 95,83 50,107 5,83 5,27" fill="#8B6914" stroke="#6B5010" stroke-width="2"/>
+    <polygon points="50,8 90,29 90,81 50,102 10,81 10,29" fill="url(#goldGrad)"/>
+    <polygon points="50,8 90,29 90,55 50,55 10,55 10,29" fill="url(#goldShine)"/>
+  </svg>`;
+}
+
+function miniHexSVG(color) {
+  const fill = color === 'blue' ? '#1976D2' : '#FFFFFF';
+  const stroke = color === 'blue' ? '#0D47A1' : '#B0BEC5';
+  return `<svg viewBox="0 0 30 34"><polygon points="15,1 28,9 28,25 15,33 2,25 2,9" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/></svg>`;
+}
+
+// ===================== BUILD BOARD =====================
+function generateLetters() {
+  const all = 'ABCDEFGHIJKLMNOPQRSTUVW'.split('');
+  const shuffled = all.sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, ROWS * COLS);
+}
+
+function buildBoard() {
+  const grid = document.getElementById('hexGrid');
+  grid.innerHTML = '';
+  boardLetters = generateLetters();
+  hexStates = {};
+
+  let idx = 0;
+  for (let r = 0; r < ROWS; r++) {
+    const row = document.createElement('div');
+    row.className = 'hex-row';
+    for (let c = 0; c < COLS; c++) {
+      const letter = boardLetters[idx];
+      const hid = `${r}-${c}`;
+      hexStates[hid] = 'default';
+
+      const hex = document.createElement('div');
+      hex.className = 'hexagon default';
+      hex.id = `hex-${hid}`;
+      hex.onclick = () => clickHex(hid, letter);
+      hex.innerHTML = hexSVG('default') + `<span class="hex-letter">${letter}</span>`;
+      row.appendChild(hex);
+      idx++;
+    }
+    grid.appendChild(row);
+  }
+
+  buildEdgeStrips();
+}
+
+function buildEdgeStrips() {
+  // White edges: top and bottom (5 hexes each, for white's top-to-bottom path)
+  ['edgeTop', 'edgeBottom'].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = '';
+    for (let i = 0; i < COLS; i++) {
+      const h = document.createElement('div');
+      h.className = 'edge-hex white';
+      h.innerHTML = miniHexSVG('white');
+      el.appendChild(h);
+    }
+  });
+  // Blue edges: left and right (4 hexes each, for blue's left-to-right path)
+  ['edgeLeft', 'edgeRight'].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = '';
+    for (let i = 0; i < ROWS; i++) {
+      const h = document.createElement('div');
+      h.className = 'edge-hex blue';
+      h.innerHTML = miniHexSVG('blue');
+      el.appendChild(h);
+    }
+  });
+}
+
+// ===================== GAME LOGIC =====================
+function startGame() {
+  document.getElementById('welcome').classList.add('hidden');
+  document.getElementById('mainApp').style.display = 'flex';
+  buildBoard();
+  updateTurnIndicator();
+}
+
+function clickHex(hid, letter) {
+  if (hexStates[hid] !== 'default') return;
+  currentHexId = hid;
+  showQuestion(letter);
+}
+
+function showQuestion(letter) {
+  const qs = wineQuestions[letter];
+  if (!qs || !qs.length) {
+    showQuestionUI(letter, `What '${letter}' is a wine term you know?`, letter + '...', 'Ask the host!');
+    return;
+  }
+  const q = qs[Math.floor(Math.random() * qs.length)];
+  showQuestionUI(letter, q.q, q.a, q.fact);
+}
+
+function showQuestionUI(letter, question, answer, fact) {
+  document.getElementById('qLetter').textContent = letter;
+  document.getElementById('qPrompt').textContent = `What '${letter}' is...`;
+  document.getElementById('qText').textContent = question;
+  document.getElementById('answerText').textContent = answer;
+  document.getElementById('answerFact').textContent = fact || '';
+  document.getElementById('answerSection').classList.remove('visible');
+  document.getElementById('revealBtn').style.display = 'inline-block';
+  document.getElementById('questionOverlay').classList.add('active');
+}
+
+function revealAnswer() {
+  document.getElementById('answerSection').classList.add('visible');
+  document.getElementById('revealBtn').style.display = 'none';
+}
+
+function awardHex(team) {
+  if (!currentHexId) return;
+  hexStates[currentHexId] = team;
+  const hex = document.getElementById(`hex-${currentHexId}`);
+  const letter = hex.querySelector('.hex-letter').textContent;
+  hex.className = `hexagon ${team} just-claimed`;
+  hex.innerHTML = hexSVG(team) + `<span class="hex-letter">${letter}</span>`;
+
+  if (team === 'blue') blueScore++;
+  else whiteScore++;
+  updateScores();
+  closeQuestion();
+
+  if (checkWin('blue')) showWinner('blue');
+  else if (checkWin('white')) showWinner('white');
+
+  currentTurn = team === 'blue' ? 'white' : 'blue';
+  updateTurnIndicator();
+}
+
+function closeQuestion() {
+  document.getElementById('questionOverlay').classList.remove('active');
+  currentHexId = null;
+}
+
+function updateScores() {
+  document.getElementById('blueScore').textContent = blueScore;
+  document.getElementById('whiteScore').textContent = whiteScore;
+}
+
+function updateTurnIndicator() {
+  document.getElementById('bluePanel').classList.toggle('active', currentTurn === 'blue');
+  document.getElementById('whitePanel').classList.toggle('active', currentTurn === 'white');
+}
+
+// ===================== WIN DETECTION =====================
+function checkWin(team) {
+  if (team === 'blue') {
+    // Blue wins by connecting left to right (col 0 to col COLS-1)
+    for (let r = 0; r < ROWS; r++) {
+      if (hexStates[`${r}-0`] === 'blue') {
+        if (dfs('blue', `${r}-0`, new Set(), 'col', COLS - 1)) return true;
+      }
+    }
+  } else {
+    // White wins by connecting top to bottom (row 0 to row ROWS-1)
+    for (let c = 0; c < COLS; c++) {
+      if (hexStates[`0-${c}`] === 'white') {
+        if (dfs('white', `0-${c}`, new Set(), 'row', ROWS - 1)) return true;
+      }
+    }
+  }
+  return false;
+}
+
+function dfs(team, hid, visited, axis, target) {
+  if (visited.has(hid)) return false;
+  visited.add(hid);
+  const [r, c] = hid.split('-').map(Number);
+  if (axis === 'row' && r === target) return true;
+  if (axis === 'col' && c === target) return true;
+  for (const [nr, nc] of getNeighbors(r, c)) {
+    const nid = `${nr}-${nc}`;
+    if (hexStates[nid] === team && !visited.has(nid)) {
+      if (dfs(team, nid, visited, axis, target)) return true;
+    }
+  }
+  return false;
+}
+
+function getNeighbors(r, c) {
+  const n = [];
+  const dirs = r % 2 === 0
+    ? [[-1,-1],[-1,0],[0,-1],[0,1],[1,-1],[1,0]]
+    : [[-1,0],[-1,1],[0,-1],[0,1],[1,0],[1,1]];
+  for (const [dr, dc] of dirs) {
+    const nr = r + dr, nc = c + dc;
+    if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) n.push([nr, nc]);
+  }
+  return n;
+}
+
+// ===================== WINNER =====================
+function showWinner(team) {
+  const name = team === 'blue'
+    ? document.getElementById('blueName').textContent
+    : document.getElementById('whiteName').textContent;
+  document.getElementById('winnerName').textContent = `${name} makes the connection!`;
+  document.getElementById('winnerOverlay').classList.add('active');
+  launchConfetti();
+}
+
+function closeWinner() {
+  document.getElementById('winnerOverlay').classList.remove('active');
+}
+
+function launchConfetti() {
+  const colors = ['#D4A020','#E8C84A','#2196F3','#fff','#F44336','#4CAF50','#FF9800'];
+  for (let i = 0; i < 80; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.animationDelay = Math.random() * 2 + 's';
+    el.style.animationDuration = (2 + Math.random() * 2) + 's';
+    el.style.width = (6 + Math.random() * 8) + 'px';
+    el.style.height = (6 + Math.random() * 8) + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 5000);
+  }
+}
+
+// ===================== CONTROLS =====================
+function resetBoard() { buildBoard(); }
+function resetScores() { blueScore = 0; whiteScore = 0; updateScores(); buildBoard(); }
+function toggleTurn() { currentTurn = currentTurn === 'blue' ? 'white' : 'blue'; updateTurnIndicator(); }
+
+// ===================== TEAM NAMES =====================
+function editTeamName(team) {
+  editingTeam = team;
+  const current = team === 'blue'
+    ? document.getElementById('blueName').textContent
+    : document.getElementById('whiteName').textContent;
+  document.getElementById('nameInput').value = current;
+  document.getElementById('nameLabel').textContent = `${team} team name`;
+  document.getElementById('nameOverlay').classList.add('active');
+  setTimeout(() => document.getElementById('nameInput').focus(), 100);
+}
+
+function confirmName() {
+  const name = document.getElementById('nameInput').value.trim();
+  if (name && editingTeam) {
+    const el = editingTeam === 'blue'
+      ? document.getElementById('blueName')
+      : document.getElementById('whiteName');
+    el.textContent = name.toUpperCase();
+  }
+  document.getElementById('nameOverlay').classList.remove('active');
+  editingTeam = null;
+}
+
+// ===================== WELCOME HEXES =====================
+function buildWelcomeHexes() {
+  const word = 'WINE';
+  const el = document.getElementById('welcomeHexes');
+  el.innerHTML = '';
+  for (const ch of word) {
+    const h = document.createElement('div');
+    h.className = 'welcome-hex';
+    h.innerHTML = `<svg viewBox="0 0 50 56"><polygon points="25,2 47,15 47,41 25,54 3,41 3,15" fill="url(#goldGrad)" stroke="#8B6914" stroke-width="2"/></svg><span>${ch}</span>`;
+    el.appendChild(h);
+  }
+}
+
+buildWelcomeHexes();
+</script>
+</body>
+</html>

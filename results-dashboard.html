@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Results — Spring Flavours — Silchester Wine Society</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@200;300;400;500;600;700&family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --wine-deep: #2a0a1a;
+    --wine-red: #8B1A4A;
+    --wine-rose: #D4638F;
+    --wine-blush: #F2B5C8;
+    --gold: #D4A846;
+    --gold-light: #F0D78C;
+    --cream: #FFF8F0;
+    --sage: #7A9B76;
+    --text-dark: #1a0810;
+    --text-mid: #5C3A44;
+    --text-light: #8B6B74;
+    --bg: #0d0509;
+    --card: rgba(42, 10, 26, 0.5);
+    --card-border: rgba(212, 99, 143, 0.15);
+    --ai-purple: #7C4DFF;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: #f5e8ee;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Ambient background */
+  .ambient-bg {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse at 15% 30%, rgba(139, 26, 74, 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 85% 70%, rgba(124, 77, 255, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 90%, rgba(212, 168, 70, 0.06) 0%, transparent 40%),
+      linear-gradient(180deg, #0d0509 0%, #150a10 50%, #0d0509 100%);
+  }
+
+  .grain-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 30px 40px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 30px;
+    position: relative;
+  }
+
+  .header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 3.2em;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 2px;
+    line-height: 1;
+    background: linear-gradient(135deg, #fff 0%, var(--wine-blush) 50%, var(--gold-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .header .subtitle {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75em;
+    color: var(--ai-purple);
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    margin-top: 6px;
+    opacity: 0.8;
+  }
+
+  .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 6px 18px;
+    background: rgba(212, 99, 143, 0.12);
+    border: 1px solid rgba(212, 99, 143, 0.25);
+    border-radius: 30px;
+    font-size: 0.78em;
+    color: var(--wine-rose);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    background: #E53935;
+    border-radius: 50%;
+    animation: livePulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes livePulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 5px #E53935; }
+    50% { opacity: 0.4; box-shadow: 0 0 15px #E53935; }
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+    justify-content: center;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 18px 28px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    min-width: 160px;
+  }
+
+  .stat-card .stat-num {
+    font-family: 'Orbitron', monospace;
+    font-size: 2.4em;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .stat-card .stat-label {
+    font-size: 0.72em;
+    color: var(--text-light);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* Wine grid */
+  .wine-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+
+  .wine-result-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 24px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s;
+    animation: cardFadeIn 0.5s ease-out;
+  }
+
+  .wine-result-card:hover {
+    border-color: rgba(212, 99, 143, 0.35);
+    box-shadow: 0 8px 40px rgba(139, 26, 74, 0.15);
+  }
+
+  @keyframes cardFadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .wine-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+
+  .wine-card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6em;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .wine-card-title .wine-emoji {
+    font-size: 0.8em;
+    margin-right: 6px;
+  }
+
+  .avg-score-big {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, var(--gold), #b8860b);
+    border-radius: 12px;
+    font-family: 'Orbitron', monospace;
+    font-size: 1.3em;
+    font-weight: 700;
+    color: var(--wine-deep);
+  }
+
+  .taster-count {
+    font-size: 0.78em;
+    color: var(--text-light);
+    margin-bottom: 14px;
+    letter-spacing: 1px;
+  }
+
+  /* Score bar chart */
+  .score-bars {
+    display: flex;
+    gap: 4px;
+    align-items: flex-end;
+    height: 55px;
+    margin-bottom: 20px;
+    padding: 0 2px;
+  }
+
+  .score-bar {
+    flex: 1;
+    border-radius: 3px 3px 0 0;
+    min-height: 3px;
+    transition: height 0.6s ease;
+    position: relative;
+    background: linear-gradient(180deg, var(--wine-rose), var(--wine-red));
+  }
+
+  .score-bar.empty {
+    background: rgba(212, 99, 143, 0.1);
+  }
+
+  .score-bar-num {
+    position: absolute;
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.6em;
+    color: rgba(255,255,255,0.3);
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Tag clouds */
+  .section-label {
+    font-size: 0.68em;
+    color: var(--text-light);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    margin-top: 12px;
+  }
+
+  .cloud-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .cloud-tag {
+    padding: 5px 12px;
+    border-radius: 14px;
+    font-size: 0.78em;
+    font-weight: 500;
+    border: 1px solid rgba(212, 99, 143, 0.2);
+    background: rgba(212, 99, 143, 0.06);
+    color: var(--wine-blush);
+    transition: all 0.3s;
+  }
+
+  .cloud-tag.top {
+    background: linear-gradient(135deg, rgba(139, 26, 74, 0.4), rgba(74, 14, 46, 0.4));
+    border-color: var(--wine-rose);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  /* Individual entries */
+  .entries-list {
+    margin-top: 14px;
+    max-height: 180px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(212,99,143,0.2) transparent;
+  }
+
+  .entry-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 10px;
+    margin-bottom: 4px;
+    background: rgba(255,255,255,0.03);
+    transition: background 0.2s;
+  }
+
+  .entry-row:hover {
+    background: rgba(255,255,255,0.06);
+  }
+
+  .entry-name {
+    font-weight: 500;
+    font-size: 0.88em;
+    color: #f5e8ee;
+  }
+
+  .entry-score {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.85em;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  .entry-note {
+    font-size: 0.78em;
+    color: var(--text-light);
+    font-style: italic;
+    margin-top: 2px;
+  }
+
+  /* Leaderboard */
+  .leaderboard-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 24px;
+    backdrop-filter: blur(10px);
+    margin-bottom: 30px;
+  }
+
+  .leaderboard-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6em;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .leaderboard-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    margin-bottom: 6px;
+    background: rgba(255,255,255,0.03);
+    transition: all 0.3s;
+  }
+
+  .leaderboard-row:first-child {
+    background: linear-gradient(135deg, rgba(212, 168, 70, 0.15), rgba(212, 168, 70, 0.05));
+    border: 1px solid rgba(212, 168, 70, 0.25);
+  }
+
+  .leaderboard-rank {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.1em;
+    font-weight: 700;
+    color: var(--gold);
+    width: 30px;
+    text-align: center;
+  }
+
+  .leaderboard-wine {
+    flex: 1;
+    font-size: 1em;
+    font-weight: 500;
+  }
+
+  .leaderboard-score {
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    font-size: 1.1em;
+    color: var(--gold);
+  }
+
+  /* No data */
+  .no-data {
+    text-align: center;
+    padding: 80px 40px;
+    color: var(--text-light);
+    font-size: 1.1em;
+  }
+
+  .no-data .big-emoji {
+    font-size: 3em;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  /* Auto-refresh indicator */
+  .refresh-timer {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 8px 16px;
+    background: rgba(42, 10, 26, 0.8);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7em;
+    color: var(--text-light);
+    letter-spacing: 1px;
+    z-index: 10;
+    backdrop-filter: blur(10px);
+  }
+
+  @media (max-width: 768px) {
+    .app { padding: 20px; }
+    .header h1 { font-size: 2em; }
+    .stats-row { flex-wrap: wrap; }
+    .stat-card { min-width: 120px; }
+    .wine-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient-bg"></div>
+<div class="grain-overlay"></div>
+
+<div class="app">
+  <div class="header">
+    <h1>Spring Flavours</h1>
+    <div class="subtitle">✦ Live Group Results ✦</div>
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      Live — Auto-refreshing
+    </div>
+  </div>
+
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card">
+      <div class="stat-num" id="totalTasters">0</div>
+      <div class="stat-label">Tasters</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="totalNotes">0</div>
+      <div class="stat-label">Tasting Notes</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="avgOverall">—</div>
+      <div class="stat-label">Avg Score</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="topWine">—</div>
+      <div class="stat-label">Top Wine</div>
+    </div>
+  </div>
+
+  <!-- Leaderboard -->
+  <div class="leaderboard-card" id="leaderboard" style="display:none;">
+    <div class="leaderboard-title">🏆 Wine Leaderboard</div>
+    <div id="leaderboardRows"></div>
+  </div>
+
+  <!-- Wine cards grid -->
+  <div class="wine-grid" id="wineGrid">
+    <div class="no-data">
+      <div class="big-emoji">🍷</div>
+      <p>Waiting for tasting notes...</p>
+      <p style="font-size: 0.8em; margin-top: 8px; opacity: 0.6;">Results will appear here as guests scan the QR code and rate wines</p>
+    </div>
+  </div>
+</div>
+
+<div class="refresh-timer" id="refreshTimer">Next refresh: 10s</div>
+
+<script>
+const NUM_WINES = 8;
+let countdown = 10;
+
+// ==================== LOAD FROM SHARED STORAGE ====================
+const STORAGE_KEY = 'silchester-spring-flavours-2026';
+
+async function loadAllSharedResults() {
+  if (!window.storage) return [];
+  try {
+    const result = await window.storage.get(STORAGE_KEY, true);
+    if (result && result.value) {
+      return JSON.parse(result.value);
+    }
+    return [];
+  } catch (e) {
+    // Key doesn't exist yet — that's fine
+    console.log('No results stored yet');
+    return [];
+  }
+}
+
+// ==================== RENDER DASHBOARD ====================
+async function refreshDashboard() {
+  const allResults = await loadAllSharedResults();
+  
+  if (allResults.length === 0) {
+    document.getElementById('wineGrid').innerHTML = `
+      <div class="no-data" style="grid-column: 1/-1;">
+        <div class="big-emoji">🍷</div>
+        <p>Waiting for tasting notes...</p>
+        <p style="font-size: 0.8em; margin-top: 8px; opacity: 0.6;">Results appear automatically as guests submit their ratings</p>
+      </div>`;
+    document.getElementById('leaderboard').style.display = 'none';
+    return;
+  }
+  
+  // Aggregate data
+  const byWine = {};
+  const allTasters = new Set();
+  
+  allResults.forEach(r => {
+    if (!r.wine) return;
+    if (!byWine[r.wine]) byWine[r.wine] = [];
+    byWine[r.wine].push(r);
+    if (r.name) allTasters.add(r.name);
+  });
+  
+  // Global stats
+  const allScores = allResults.map(r => r.score || 5);
+  const globalAvg = (allScores.reduce((a,b) => a+b, 0) / allScores.length).toFixed(1);
+  
+  // Find top wine
+  let topWineNum = 0, topWineAvg = 0;
+  Object.keys(byWine).forEach(wNum => {
+    const scores = byWine[wNum].map(e => e.score || 5);
+    const avg = scores.reduce((a,b) => a+b, 0) / scores.length;
+    if (avg > topWineAvg) { topWineAvg = avg; topWineNum = wNum; }
+  });
+  
+  document.getElementById('totalTasters').textContent = allTasters.size;
+  document.getElementById('totalNotes').textContent = allResults.length;
+  document.getElementById('avgOverall').textContent = globalAvg;
+  document.getElementById('topWine').textContent = topWineNum ? `#${topWineNum}` : '—';
+  
+  // Leaderboard
+  const wineRanking = Object.keys(byWine).map(wNum => {
+    const scores = byWine[wNum].map(e => e.score || 5);
+    return {
+      wine: wNum,
+      avg: (scores.reduce((a,b) => a+b, 0) / scores.length),
+      count: scores.length
+    };
+  }).sort((a,b) => b.avg - a.avg);
+  
+  if (wineRanking.length > 1) {
+    document.getElementById('leaderboard').style.display = 'block';
+    document.getElementById('leaderboardRows').innerHTML = wineRanking.map((w, i) => `
+      <div class="leaderboard-row">
+        <div class="leaderboard-rank">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</div>
+        <div class="leaderboard-wine">Wine ${w.wine}</div>
+        <div style="font-size: 0.78em; color: var(--text-light);">${w.count} ratings</div>
+        <div class="leaderboard-score">${w.avg.toFixed(1)}</div>
+      </div>
+    `).join('');
+  }
+  
+  // Wine cards
+  let cardsHtml = '';
+  
+  for (let wNum = 1; wNum <= NUM_WINES; wNum++) {
+    const entries = byWine[wNum];
+    if (!entries || entries.length === 0) continue;
+    
+    const scores = entries.map(e => e.score || 5);
+    const avgScore = (scores.reduce((a,b) => a+b, 0) / scores.length).toFixed(1);
+    
+    // Aggregate
+    const aromaCount = {}, flavourCount = {}, colourCount = {};
+    entries.forEach(e => {
+      (e.aromas || []).forEach(a => { aromaCount[a] = (aromaCount[a] || 0) + 1; });
+      (e.flavours || []).forEach(f => { flavourCount[f] = (flavourCount[f] || 0) + 1; });
+      if (e.colour) colourCount[e.colour] = (colourCount[e.colour] || 0) + 1;
+    });
+    
+    const topAromas = Object.entries(aromaCount).sort((a,b) => b[1] - a[1]).slice(0, 5);
+    const topFlavours = Object.entries(flavourCount).sort((a,b) => b[1] - a[1]).slice(0, 5);
+    
+    // Score distribution
+    const scoreDist = new Array(10).fill(0);
+    scores.forEach(s => { if (s >= 1 && s <= 10) scoreDist[s-1]++; });
+    const maxCount = Math.max(...scoreDist, 1);
+    
+    cardsHtml += `
+      <div class="wine-result-card" style="animation-delay: ${wNum * 0.1}s">
+        <div class="wine-card-header">
+          <div class="wine-card-title"><span class="wine-emoji">🍷</span> Wine ${wNum}</div>
+          <div class="avg-score-big">★ ${avgScore}</div>
+        </div>
+        <div class="taster-count">${entries.length} rating${entries.length !== 1 ? 's' : ''}</div>
+        
+        <div class="score-bars">
+          ${scoreDist.map((count, i) => `
+            <div class="score-bar ${count === 0 ? 'empty' : ''}" style="height: ${count > 0 ? Math.max(6, (count / maxCount) * 55) : 3}px;">
+              <span class="score-bar-num">${i+1}</span>
+            </div>
+          `).join('')}
+        </div>
+        
+        ${topAromas.length > 0 ? `
+          <div class="section-label" style="margin-top: 22px;">Top Aromas</div>
+          <div class="cloud-tags">
+            ${topAromas.map((a, i) => `<span class="cloud-tag ${i === 0 ? 'top' : ''}">${a[0]}</span>`).join('')}
+          </div>
+        ` : ''}
+        
+        ${topFlavours.length > 0 ? `
+          <div class="section-label">Top Flavours</div>
+          <div class="cloud-tags">
+            ${topFlavours.map((f, i) => `<span class="cloud-tag ${i === 0 ? 'top' : ''}">${f[0]}</span>`).join('')}
+          </div>
+        ` : ''}
+        
+        <div class="section-label">Tasters</div>
+        <div class="entries-list">
+          ${entries.sort((a,b) => (b.score || 5) - (a.score || 5)).map(e => `
+            <div class="entry-row">
+              <div>
+                <div class="entry-name">${e.name || 'Anonymous'}</div>
+                ${e.notes ? `<div class="entry-note">"${e.notes.substring(0, 60)}${e.notes.length > 60 ? '...' : ''}"</div>` : ''}
+              </div>
+              <div class="entry-score">${e.score || '?'}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  document.getElementById('wineGrid').innerHTML = cardsHtml || `
+    <div class="no-data" style="grid-column: 1/-1;">
+      <div class="big-emoji">🍷</div>
+      <p>Waiting for tasting notes...</p>
+    </div>`;
+}
+
+// ==================== AUTO-REFRESH ====================
+function startAutoRefresh() {
+  countdown = 10;
+  updateTimer();
+  
+  setInterval(() => {
+    countdown--;
+    updateTimer();
+    if (countdown <= 0) {
+      countdown = 10;
+      refreshDashboard();
+    }
+  }, 1000);
+}
+
+function updateTimer() {
+  document.getElementById('refreshTimer').textContent = `Next refresh: ${countdown}s`;
+}
+
+// ==================== INIT ====================
+refreshDashboard();
+startAutoRefresh();
+</script>
+</body>
+</html>

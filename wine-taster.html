@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AI Wine Taster — Silchester Wine Society</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Outfit:wght@200;300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --wine-deep: #4A0E2E;
+    --wine-red: #8B1A4A;
+    --wine-rose: #D4638F;
+    --wine-blush: #F2B5C8;
+    --gold: #D4A846;
+    --gold-light: #F0D78C;
+    --cream: #FFF8F0;
+    --sage: #7A9B76;
+    --sage-light: #B5D4A8;
+    --spring-green: #4CAF50;
+    --sky: #87CEEB;
+    --text-dark: #2C1018;
+    --text-mid: #5C3A44;
+    --text-light: #8B6B74;
+    --bg: #FFFAF5;
+    --card: #FFFFFF;
+    --ai-purple: #7C4DFF;
+    --ai-purple-light: #B388FF;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text-dark);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .spring-bg {
+    position: fixed;
+    top: 0; left: 0; right: 0; height: 300px;
+    background: linear-gradient(180deg, #f8e8f0 0%, #fef5f0 40%, var(--bg) 100%);
+    z-index: 0;
+  }
+
+  .spring-bg::before {
+    content: '';
+    position: absolute;
+    top: -50px; right: -30px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(212,99,143,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .spring-bg::after {
+    content: '';
+    position: absolute;
+    top: 40px; left: -20px;
+    width: 150px; height: 150px;
+    background: radial-gradient(circle, rgba(122,155,118,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 20px 100px;
+  }
+
+  .header {
+    text-align: center;
+    padding: 30px 0 20px;
+  }
+
+  .header .logo-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .header .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--wine-red), var(--ai-purple));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(139, 26, 74, 0.2);
+  }
+
+  .header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2em;
+    font-weight: 600;
+    color: var(--wine-deep);
+    letter-spacing: 1px;
+    line-height: 1.1;
+  }
+
+  .header h1 span {
+    display: block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.35em;
+    color: var(--ai-purple);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-top: 4px;
+    font-weight: 400;
+  }
+
+  .header .event-info {
+    font-size: 0.8em;
+    color: var(--text-light);
+    margin-top: 6px;
+    letter-spacing: 1px;
+  }
+
+  /* Nav tabs for tasting vs results */
+  .mode-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    background: #f0e8e2;
+    border-radius: 14px;
+    padding: 3px;
+  }
+
+  .mode-tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    border-radius: 12px;
+    font-size: 0.88em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: var(--text-mid);
+  }
+
+  .mode-tab.active {
+    background: var(--card);
+    color: var(--wine-deep);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  .name-section { margin-bottom: 24px; }
+
+  .name-input-wrapper {
+    position: relative;
+  }
+
+  .name-input-wrapper input {
+    width: 100%;
+    padding: 14px 18px;
+    border: 1.5px solid #e8ddd5;
+    border-radius: 14px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1em;
+    background: var(--card);
+    color: var(--text-dark);
+    outline: none;
+    transition: all 0.3s;
+  }
+
+  .name-input-wrapper input:focus {
+    border-color: var(--wine-rose);
+    box-shadow: 0 0 0 3px rgba(212, 99, 143, 0.1);
+  }
+
+  .name-input-wrapper label {
+    position: absolute;
+    top: -8px;
+    left: 14px;
+    background: var(--bg);
+    padding: 0 6px;
+    font-size: 0.72em;
+    color: var(--text-light);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .wine-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 0 16px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .wine-tabs::-webkit-scrollbar { display: none; }
+
+  .wine-tab {
+    flex-shrink: 0;
+    padding: 10px 18px;
+    border-radius: 30px;
+    font-size: 0.85em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 1.5px solid #e8ddd5;
+    background: var(--card);
+    color: var(--text-mid);
+    white-space: nowrap;
+  }
+
+  .wine-tab.active {
+    background: linear-gradient(135deg, var(--wine-red), var(--wine-deep));
+    color: #fff;
+    border-color: var(--wine-red);
+    box-shadow: 0 4px 15px rgba(139, 26, 74, 0.25);
+  }
+
+  .wine-tab.has-data {
+    border-color: var(--sage);
+  }
+
+  .wine-tab.has-data::after {
+    content: ' ✓';
+    font-size: 0.8em;
+  }
+
+  .wine-tab .wine-num {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    font-size: 0.75em;
+    line-height: 20px;
+    text-align: center;
+    margin-right: 4px;
+  }
+
+  .wine-tab:not(.active) .wine-num { background: #f0e8e2; }
+
+  .tasting-card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 20px rgba(44, 16, 24, 0.06);
+    border: 1px solid rgba(232, 221, 213, 0.5);
+  }
+
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3em;
+    font-weight: 600;
+    color: var(--wine-deep);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title .icon { font-size: 1.2em; }
+
+  .colour-options {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .colour-opt {
+    flex: 1;
+    min-width: 80px;
+    padding: 12px 8px;
+    border-radius: 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+    font-size: 0.82em;
+    font-weight: 500;
+  }
+
+  .colour-opt .swatch {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    margin: 0 auto 6px;
+    border: 2px solid rgba(0,0,0,0.05);
+    transition: all 0.3s;
+  }
+
+  .colour-opt.selected {
+    border-color: var(--wine-red);
+    background: rgba(139, 26, 74, 0.04);
+  }
+
+  .colour-opt.selected .swatch {
+    transform: scale(1.1);
+    box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+  }
+
+  .colour-opt:active { transform: scale(0.95); }
+
+  .select-group { margin-bottom: 14px; }
+
+  .select-group label {
+    display: block;
+    font-size: 0.78em;
+    font-weight: 500;
+    color: var(--text-light);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .custom-select { position: relative; }
+
+  .custom-select select {
+    width: 100%;
+    padding: 12px 40px 12px 16px;
+    border: 1.5px solid #e8ddd5;
+    border-radius: 12px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95em;
+    color: var(--text-dark);
+    background: var(--card);
+    appearance: none;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .custom-select select:focus {
+    border-color: var(--wine-rose);
+    box-shadow: 0 0 0 3px rgba(212, 99, 143, 0.1);
+  }
+
+  .custom-select::after {
+    content: '▾';
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-light);
+    pointer-events: none;
+  }
+
+  .chip-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .chip {
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 0.82em;
+    cursor: pointer;
+    transition: all 0.25s;
+    border: 1.5px solid #e8ddd5;
+    background: var(--card);
+    color: var(--text-mid);
+    user-select: none;
+  }
+
+  .chip:active { transform: scale(0.93); }
+
+  .chip.selected {
+    background: var(--wine-blush);
+    border-color: var(--wine-rose);
+    color: var(--wine-deep);
+    font-weight: 500;
+  }
+
+  .chip.selected::before {
+    content: '✓ ';
+    font-size: 0.8em;
+  }
+
+  .slider-group { margin-bottom: 14px; }
+
+  .slider-group label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78em;
+    font-weight: 500;
+    color: var(--text-light);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .slider-group label .value {
+    color: var(--wine-red);
+    font-weight: 600;
+  }
+
+  .slider-track {
+    position: relative;
+    height: 6px;
+    background: #f0e8e2;
+    border-radius: 3px;
+    margin: 0 4px;
+  }
+
+  .slider-track input[type="range"] {
+    width: 100%;
+    position: absolute;
+    top: -10px;
+    left: 0;
+    appearance: none;
+    background: transparent;
+    outline: none;
+    height: 26px;
+    cursor: pointer;
+  }
+
+  .slider-track input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--wine-red), var(--wine-rose));
+    box-shadow: 0 2px 8px rgba(139, 26, 74, 0.3);
+    cursor: pointer;
+  }
+
+  .slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.68em;
+    color: var(--text-light);
+    margin-top: 4px;
+  }
+
+  .notes-area {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1.5px solid #e8ddd5;
+    border-radius: 14px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95em;
+    color: var(--text-dark);
+    background: var(--card);
+    resize: none;
+    height: 90px;
+    outline: none;
+    transition: all 0.3s;
+  }
+
+  .notes-area:focus {
+    border-color: var(--wine-rose);
+    box-shadow: 0 0 0 3px rgba(212, 99, 143, 0.1);
+  }
+
+  .ai-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 16px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: linear-gradient(135deg, var(--ai-purple), #5E35B1);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(124, 77, 255, 0.3);
+    letter-spacing: 0.5px;
+  }
+
+  .ai-btn:active { transform: scale(0.97); }
+
+  .ai-btn .sparkle {
+    font-size: 1.2em;
+    animation: sparkleRotate 3s linear infinite;
+  }
+
+  @keyframes sparkleRotate {
+    0% { transform: rotate(0deg); }
+    25% { transform: rotate(10deg) scale(1.1); }
+    50% { transform: rotate(0deg); }
+    75% { transform: rotate(-10deg) scale(1.1); }
+    100% { transform: rotate(0deg); }
+  }
+
+  .ai-result {
+    display: none;
+    background: linear-gradient(135deg, #f8f0ff, #f0e8ff);
+    border: 1.5px solid var(--ai-purple-light);
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 12px;
+    animation: slideIn 0.4s ease-out;
+  }
+
+  .ai-result.visible { display: block; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .ai-result-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72em;
+    color: var(--ai-purple);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .ai-result-text {
+    font-size: 0.92em;
+    line-height: 1.6;
+    color: var(--text-dark);
+  }
+
+  .ai-result-text strong { color: var(--ai-purple); }
+
+  .submit-section {
+    padding: 20px 0;
+    text-align: center;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 16px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    background: linear-gradient(135deg, var(--sage), var(--spring-green));
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    letter-spacing: 0.5px;
+    transition: all 0.3s;
+  }
+
+  .submit-btn:active { transform: scale(0.97); }
+
+  .saved-msg {
+    display: none;
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(76, 175, 80, 0.08);
+    border-radius: 12px;
+    color: var(--sage);
+    font-weight: 500;
+    animation: slideIn 0.3s;
+  }
+
+  .saved-msg.visible { display: block; }
+
+  .footer {
+    text-align: center;
+    padding: 20px 0;
+    font-size: 0.72em;
+    color: var(--text-light);
+    letter-spacing: 1px;
+  }
+
+  .footer .ai-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    background: rgba(124, 77, 255, 0.08);
+    border-radius: 10px;
+    color: var(--ai-purple);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9em;
+    letter-spacing: 2px;
+    margin-top: 4px;
+  }
+
+  /* ========== RESULTS VIEW ========== */
+  .results-view { display: none; }
+  .results-view.active { display: block; }
+  .tasting-view.hidden { display: none; }
+
+  .results-summary-card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 20px rgba(44, 16, 24, 0.06);
+    border: 1px solid rgba(232, 221, 213, 0.5);
+  }
+
+  .results-wine-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .results-wine-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4em;
+    font-weight: 600;
+    color: var(--wine-deep);
+  }
+
+  .avg-score {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    border-radius: 20px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1em;
+    font-weight: 700;
+    color: var(--wine-deep);
+  }
+
+  .results-stat-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+
+  .results-stat {
+    flex: 1;
+    min-width: 100px;
+    background: #faf5f0;
+    border-radius: 12px;
+    padding: 10px 14px;
+    text-align: center;
+  }
+
+  .results-stat-label {
+    font-size: 0.68em;
+    color: var(--text-light);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .results-stat-value {
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--wine-deep);
+  }
+
+  .results-bar-section { margin-bottom: 12px; }
+
+  .results-bar-label {
+    font-size: 0.75em;
+    color: var(--text-light);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .bar-chart {
+    display: flex;
+    gap: 3px;
+    align-items: flex-end;
+    height: 50px;
+    padding: 0 4px;
+  }
+
+  .bar {
+    flex: 1;
+    background: linear-gradient(180deg, var(--wine-rose), var(--wine-red));
+    border-radius: 4px 4px 0 0;
+    min-height: 3px;
+    transition: height 0.5s ease;
+    position: relative;
+  }
+
+  .bar-label {
+    position: absolute;
+    bottom: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.6em;
+    color: var(--text-light);
+    white-space: nowrap;
+  }
+
+  .tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .tag {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    background: var(--wine-blush);
+    color: var(--wine-deep);
+    font-weight: 500;
+  }
+
+  .tag.popular {
+    background: linear-gradient(135deg, var(--wine-red), var(--wine-deep));
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .tasters-count {
+    text-align: center;
+    padding: 12px;
+    background: linear-gradient(135deg, rgba(124,77,255,0.06), rgba(139,26,74,0.06));
+    border-radius: 14px;
+    margin-bottom: 20px;
+    font-size: 0.9em;
+    color: var(--text-mid);
+  }
+
+  .tasters-count strong {
+    color: var(--ai-purple);
+    font-size: 1.3em;
+  }
+
+  .refresh-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.92em;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid var(--wine-rose);
+    background: transparent;
+    color: var(--wine-red);
+    transition: all 0.3s;
+    margin-bottom: 16px;
+  }
+
+  .refresh-btn:active { transform: scale(0.97); }
+
+  .individual-notes { margin-top: 10px; }
+
+  .individual-note {
+    padding: 10px 14px;
+    background: #faf5f0;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    font-size: 0.85em;
+  }
+
+  .individual-note .note-name {
+    font-weight: 600;
+    color: var(--wine-deep);
+    margin-bottom: 2px;
+  }
+
+  .individual-note .note-detail {
+    color: var(--text-mid);
+    font-size: 0.92em;
+  }
+
+  .individual-note .note-score {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--gold-light);
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85em;
+    color: var(--wine-deep);
+    margin-left: 6px;
+  }
+
+  .loading-indicator {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(139,26,74,0.2);
+    border-radius: 50%;
+    border-top-color: var(--wine-red);
+    animation: spin 0.6s linear infinite;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="spring-bg"></div>
+
+<div class="app">
+  <div class="header">
+    <div class="logo-mark">
+      <div class="logo-icon">🍷</div>
+    </div>
+    <h1>
+      Spring Flavours
+      <span>✦ AI Wine Tasting ✦</span>
+    </h1>
+    <div class="event-info">Silchester Wine Society — New Beginnings</div>
+  </div>
+
+  <!-- Mode tabs -->
+  <div class="mode-tabs">
+    <div class="mode-tab active" id="modeTabTasting" onclick="showMode('tasting')">🍷 My Tasting</div>
+    <div class="mode-tab" id="modeTabResults" onclick="showMode('results')">📊 Group Results</div>
+  </div>
+
+  <!-- ==================== TASTING VIEW ==================== -->
+  <div class="tasting-view" id="tastingView">
+    <div class="name-section">
+      <div class="name-input-wrapper">
+        <label>Your Name</label>
+        <input type="text" id="tasterName" placeholder="Enter your name..." />
+      </div>
+    </div>
+
+    <div class="wine-tabs" id="wineTabs"></div>
+
+    <div id="tastingForm">
+      <!-- Appearance -->
+      <div class="tasting-card">
+        <div class="card-title"><span class="icon">👁️</span> Appearance</div>
+        <div class="colour-options" id="colourOptions">
+          <div class="colour-opt" data-val="pale-straw" onclick="selectColour(this)">
+            <div class="swatch" style="background: #F5E6B8;"></div>
+            Pale Straw
+          </div>
+          <div class="colour-opt" data-val="gold" onclick="selectColour(this)">
+            <div class="swatch" style="background: #DAA520;"></div>
+            Gold
+          </div>
+          <div class="colour-opt" data-val="salmon" onclick="selectColour(this)">
+            <div class="swatch" style="background: #FA8072;"></div>
+            Salmon
+          </div>
+          <div class="colour-opt" data-val="ruby" onclick="selectColour(this)">
+            <div class="swatch" style="background: #9B111E;"></div>
+            Ruby
+          </div>
+          <div class="colour-opt" data-val="garnet" onclick="selectColour(this)">
+            <div class="swatch" style="background: #733635;"></div>
+            Garnet
+          </div>
+          <div class="colour-opt" data-val="deep-purple" onclick="selectColour(this)">
+            <div class="swatch" style="background: #4A0E2E;"></div>
+            Deep Purple
+          </div>
+        </div>
+      </div>
+
+      <!-- Nose -->
+      <div class="tasting-card">
+        <div class="card-title"><span class="icon">👃</span> On the Nose</div>
+        <div class="select-group">
+          <label>Intensity</label>
+          <div class="custom-select">
+            <select id="noseIntensity">
+              <option value="">Select intensity...</option>
+              <option>Light</option><option>Medium-</option><option>Medium</option><option>Medium+</option><option>Pronounced</option>
+            </select>
+          </div>
+        </div>
+        <div class="select-group">
+          <label>Primary Aromas (select all that apply)</label>
+          <div class="chip-group" id="aromaChips">
+            <span class="chip" onclick="toggleChip(this)">🍋 Citrus</span>
+            <span class="chip" onclick="toggleChip(this)">🍎 Apple</span>
+            <span class="chip" onclick="toggleChip(this)">🍑 Stone Fruit</span>
+            <span class="chip" onclick="toggleChip(this)">🫐 Berry</span>
+            <span class="chip" onclick="toggleChip(this)">🍒 Cherry</span>
+            <span class="chip" onclick="toggleChip(this)">🌸 Floral</span>
+            <span class="chip" onclick="toggleChip(this)">🌿 Herbal</span>
+            <span class="chip" onclick="toggleChip(this)">🫑 Green Pepper</span>
+            <span class="chip" onclick="toggleChip(this)">🍫 Chocolate</span>
+            <span class="chip" onclick="toggleChip(this)">☕ Coffee</span>
+            <span class="chip" onclick="toggleChip(this)">🍞 Toast</span>
+            <span class="chip" onclick="toggleChip(this)">🫧 Yeast</span>
+            <span class="chip" onclick="toggleChip(this)">🥜 Nutty</span>
+            <span class="chip" onclick="toggleChip(this)">🍯 Honey</span>
+            <span class="chip" onclick="toggleChip(this)">🌶️ Spice</span>
+            <span class="chip" onclick="toggleChip(this)">🪨 Mineral</span>
+            <span class="chip" onclick="toggleChip(this)">🌍 Earthy</span>
+            <span class="chip" onclick="toggleChip(this)">🥩 Meaty</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Palate -->
+      <div class="tasting-card">
+        <div class="card-title"><span class="icon">👅</span> On the Palate</div>
+        <div class="select-group">
+          <label>Sweetness</label>
+          <div class="custom-select">
+            <select id="sweetness">
+              <option value="">Select sweetness...</option>
+              <option>Bone Dry</option><option>Dry</option><option>Off-Dry</option><option>Medium Sweet</option><option>Sweet</option>
+            </select>
+          </div>
+        </div>
+        <div class="select-group">
+          <label>Acidity</label>
+          <div class="custom-select">
+            <select id="acidity">
+              <option value="">Select acidity...</option>
+              <option>Low</option><option>Medium-</option><option>Medium</option><option>Medium+</option><option>High</option>
+            </select>
+          </div>
+        </div>
+        <div class="select-group">
+          <label>Tannin (reds only)</label>
+          <div class="custom-select">
+            <select id="tannin">
+              <option value="">Select tannin...</option>
+              <option>N/A (White/Rosé)</option><option>Low</option><option>Medium-</option><option>Medium</option><option>Medium+</option><option>High</option>
+            </select>
+          </div>
+        </div>
+        <div class="select-group">
+          <label>Body</label>
+          <div class="custom-select">
+            <select id="body">
+              <option value="">Select body...</option>
+              <option>Light</option><option>Medium-</option><option>Medium</option><option>Medium+</option><option>Full</option>
+            </select>
+          </div>
+        </div>
+        <div class="select-group">
+          <label>Finish</label>
+          <div class="custom-select">
+            <select id="finish">
+              <option value="">Select finish...</option>
+              <option>Short</option><option>Medium-</option><option>Medium</option><option>Medium+</option><option>Long</option>
+            </select>
+          </div>
+        </div>
+        <div class="select-group">
+          <label>Flavour Notes (select all that apply)</label>
+          <div class="chip-group" id="flavourChips">
+            <span class="chip" onclick="toggleChip(this)">🍋 Lemon</span>
+            <span class="chip" onclick="toggleChip(this)">🍊 Orange</span>
+            <span class="chip" onclick="toggleChip(this)">🍏 Green Apple</span>
+            <span class="chip" onclick="toggleChip(this)">🍑 Peach</span>
+            <span class="chip" onclick="toggleChip(this)">🍓 Strawberry</span>
+            <span class="chip" onclick="toggleChip(this)">🫐 Blackcurrant</span>
+            <span class="chip" onclick="toggleChip(this)">🍒 Plum</span>
+            <span class="chip" onclick="toggleChip(this)">🌶️ Black Pepper</span>
+            <span class="chip" onclick="toggleChip(this)">🫒 Olive</span>
+            <span class="chip" onclick="toggleChip(this)">🍫 Dark Choc</span>
+            <span class="chip" onclick="toggleChip(this)">🍦 Vanilla</span>
+            <span class="chip" onclick="toggleChip(this)">🧈 Butter</span>
+            <span class="chip" onclick="toggleChip(this)">🪵 Oak</span>
+            <span class="chip" onclick="toggleChip(this)">🍄 Truffle</span>
+            <span class="chip" onclick="toggleChip(this)">🌹 Rose</span>
+            <span class="chip" onclick="toggleChip(this)">💎 Flinty</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rating -->
+      <div class="tasting-card">
+        <div class="card-title"><span class="icon">⭐</span> Your Rating</div>
+        <div class="slider-group">
+          <label>Overall Score <span class="value" id="scoreValue">5</span>/10</label>
+          <div class="slider-track">
+            <input type="range" min="1" max="10" value="5" id="overallScore" oninput="document.getElementById('scoreValue').textContent = this.value">
+          </div>
+          <div class="slider-labels"><span>Not for me</span><span>Outstanding</span></div>
+        </div>
+        <div class="select-group" style="margin-top: 16px;">
+          <label>Personal Notes</label>
+          <textarea class="notes-area" id="personalNotes" placeholder="Any other thoughts? What food would you pair this with?"></textarea>
+        </div>
+      </div>
+
+      <!-- AI Insight -->
+      <div class="tasting-card">
+        <div class="card-title"><span class="icon">🤖</span> AI Sommelier</div>
+        <p style="font-size: 0.88em; color: var(--text-light); margin-bottom: 14px;">Based on your tasting notes, AI will suggest what this wine might be and recommend perfect food pairings.</p>
+        <button class="ai-btn" id="aiBtn" onclick="getAIInsight()">
+          <span class="sparkle">✨</span> Ask the AI Sommelier
+        </button>
+        <div class="ai-result" id="aiResult">
+          <div class="ai-result-header"><span>✦</span> AI Analysis</div>
+          <div class="ai-result-text" id="aiResultText"></div>
+        </div>
+      </div>
+
+      <!-- Save -->
+      <div class="submit-section">
+        <button class="submit-btn" onclick="saveTasting()">💾 Save & Share Tasting Notes</button>
+        <div class="saved-msg" id="savedMsg">✓ Notes saved and shared with the group! Move on to the next wine.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== RESULTS VIEW ==================== -->
+  <div class="results-view" id="resultsView">
+    <div class="tasters-count" id="tastersCount">
+      <strong>0</strong> tasters have shared notes so far
+    </div>
+    <button class="refresh-btn" onclick="loadAllResults()">🔄 Refresh Results</button>
+    <div id="resultsContainer">
+      <p style="text-align:center; color:var(--text-light); padding: 40px 0;">No results yet — start tasting!</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    Silchester Wine Society — Spring Flavours 2026
+    <br><div class="ai-tag">✦ Powered by AI ✦</div>
+  </div>
+</div>
+
+<script>
+// ==================== STATE ====================
+const NUM_WINES = 8;
+let currentWine = 1;
+let tastingData = {};
+let currentMode = 'tasting';
+
+for (let i = 1; i <= NUM_WINES; i++) {
+  tastingData[i] = { colour:'', noseIntensity:'', aromas:[], sweetness:'', acidity:'', tannin:'', body:'', finish:'', flavours:[], score:5, notes:'', aiInsight:'' };
+}
+
+// ==================== PERSISTENT STORAGE ====================
+// Uses a single shared key to store ALL tasting results (avoids list() issues)
+const STORAGE_KEY = 'silchester-spring-flavours-2026';
+
+async function saveToSharedStorage(tasterName, wineNum, data) {
+  if (!window.storage) return;
+  try {
+    // Load existing results first
+    let allResults = [];
+    try {
+      const existing = await window.storage.get(STORAGE_KEY, true);
+      if (existing && existing.value) {
+        allResults = JSON.parse(existing.value);
+      }
+    } catch (e) {
+      // Key doesn't exist yet, start fresh
+      allResults = [];
+    }
+    
+    // Create new entry
+    const entry = {
+      name: tasterName,
+      wine: wineNum,
+      colour: data.colour,
+      noseIntensity: data.noseIntensity,
+      aromas: data.aromas,
+      sweetness: data.sweetness,
+      acidity: data.acidity,
+      tannin: data.tannin,
+      body: data.body,
+      finish: data.finish,
+      flavours: data.flavours,
+      score: data.score,
+      notes: data.notes,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Remove any previous entry from same person for same wine
+    allResults = allResults.filter(r => 
+      !(r.name === tasterName && r.wine === wineNum)
+    );
+    
+    // Add new entry
+    allResults.push(entry);
+    
+    // Save back
+    await window.storage.set(STORAGE_KEY, JSON.stringify(allResults), true);
+  } catch (e) {
+    console.error('Storage save error:', e);
+  }
+}
+
+async function loadAllSharedResults() {
+  if (!window.storage) return [];
+  try {
+    const result = await window.storage.get(STORAGE_KEY, true);
+    if (result && result.value) {
+      return JSON.parse(result.value);
+    }
+    return [];
+  } catch (e) {
+    // Key doesn't exist yet — that's fine
+    console.log('No results stored yet');
+    return [];
+  }
+}
+
+// ==================== MODE SWITCHING ====================
+function showMode(mode) {
+  currentMode = mode;
+  document.getElementById('modeTabTasting').classList.toggle('active', mode === 'tasting');
+  document.getElementById('modeTabResults').classList.toggle('active', mode === 'results');
+  document.getElementById('tastingView').classList.toggle('hidden', mode !== 'tasting');
+  document.getElementById('resultsView').classList.toggle('active', mode === 'results');
+  
+  if (mode === 'results') {
+    loadAllResults();
+  }
+}
+
+// ==================== WINE TABS ====================
+function buildTabs() {
+  const tabs = document.getElementById('wineTabs');
+  tabs.innerHTML = '';
+  for (let i = 1; i <= NUM_WINES; i++) {
+    const tab = document.createElement('div');
+    const hasData = tastingData[i].colour || tastingData[i].aromas.length > 0 || tastingData[i].notes;
+    tab.className = `wine-tab ${i === currentWine ? 'active' : ''} ${hasData ? 'has-data' : ''}`;
+    tab.onclick = () => switchWine(i);
+    tab.innerHTML = `<span class="wine-num">${i}</span> Wine ${i}`;
+    tabs.appendChild(tab);
+  }
+}
+
+function switchWine(num) {
+  saveCurrentState();
+  currentWine = num;
+  buildTabs();
+  loadWineState();
+}
+
+// ==================== STATE MANAGEMENT ====================
+function saveCurrentState() {
+  const w = tastingData[currentWine];
+  w.noseIntensity = document.getElementById('noseIntensity').value;
+  w.sweetness = document.getElementById('sweetness').value;
+  w.acidity = document.getElementById('acidity').value;
+  w.tannin = document.getElementById('tannin').value;
+  w.body = document.getElementById('body').value;
+  w.finish = document.getElementById('finish').value;
+  w.score = parseInt(document.getElementById('overallScore').value);
+  w.notes = document.getElementById('personalNotes').value;
+  
+  w.aromas = [];
+  document.querySelectorAll('#aromaChips .chip.selected').forEach(c => {
+    w.aromas.push(c.textContent.replace('✓ ', ''));
+  });
+  w.flavours = [];
+  document.querySelectorAll('#flavourChips .chip.selected').forEach(c => {
+    w.flavours.push(c.textContent.replace('✓ ', ''));
+  });
+}
+
+function loadWineState() {
+  const w = tastingData[currentWine];
+  document.querySelectorAll('.colour-opt').forEach(opt => {
+    opt.classList.toggle('selected', opt.dataset.val === w.colour);
+  });
+  document.getElementById('noseIntensity').value = w.noseIntensity || '';
+  document.getElementById('sweetness').value = w.sweetness || '';
+  document.getElementById('acidity').value = w.acidity || '';
+  document.getElementById('tannin').value = w.tannin || '';
+  document.getElementById('body').value = w.body || '';
+  document.getElementById('finish').value = w.finish || '';
+  document.getElementById('overallScore').value = w.score || 5;
+  document.getElementById('scoreValue').textContent = w.score || 5;
+  document.getElementById('personalNotes').value = w.notes || '';
+  
+  document.querySelectorAll('#aromaChips .chip').forEach(c => {
+    const text = c.textContent.replace('✓ ', '');
+    c.classList.toggle('selected', w.aromas.includes(text));
+  });
+  document.querySelectorAll('#flavourChips .chip').forEach(c => {
+    const text = c.textContent.replace('✓ ', '');
+    c.classList.toggle('selected', w.flavours.includes(text));
+  });
+  
+  const aiResult = document.getElementById('aiResult');
+  if (w.aiInsight) {
+    document.getElementById('aiResultText').innerHTML = w.aiInsight;
+    aiResult.classList.add('visible');
+  } else {
+    aiResult.classList.remove('visible');
+  }
+  document.getElementById('savedMsg').classList.remove('visible');
+}
+
+// ==================== INTERACTIONS ====================
+function selectColour(el) {
+  document.querySelectorAll('.colour-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  tastingData[currentWine].colour = el.dataset.val;
+}
+
+function toggleChip(el) { el.classList.toggle('selected'); }
+
+// ==================== AI SOMMELIER ====================
+function getAIInsight() {
+  saveCurrentState();
+  const w = tastingData[currentWine];
+  const btn = document.getElementById('aiBtn');
+  btn.innerHTML = '<span class="loading-indicator"></span> Analysing...';
+  btn.disabled = true;
+  
+  setTimeout(() => {
+    const insight = generateAIInsight(w);
+    w.aiInsight = insight;
+    document.getElementById('aiResultText').innerHTML = insight;
+    document.getElementById('aiResult').classList.add('visible');
+    btn.innerHTML = '<span class="sparkle">✨</span> Ask the AI Sommelier Again';
+    btn.disabled = false;
+  }, 1500);
+}
+
+function generateAIInsight(w) {
+  const isRed = ['ruby', 'garnet', 'deep-purple'].includes(w.colour);
+  const isWhite = ['pale-straw', 'gold'].includes(w.colour);
+  const isRose = w.colour === 'salmon';
+  
+  let guesses = [], pairings = [], funFact = '';
+  
+  if (isRed) {
+    if (w.aromas.some(a => a.includes('Cherry')) && w.tannin && w.tannin.includes('High')) {
+      guesses = ['Nebbiolo (Barolo/Barbaresco)', 'Sangiovese (Chianti Classico)'];
+      pairings = ['aged Parmigiano', 'braised short ribs', 'truffle pasta'];
+    } else if (w.aromas.some(a => a.includes('Berry')) && w.body === 'Full') {
+      guesses = ['Malbec (Mendoza)', 'Shiraz (Barossa Valley)'];
+      pairings = ['grilled lamb', 'spiced beef tagine', 'mature cheddar'];
+    } else if (w.aromas.some(a => a.includes('Cherry') || a.includes('Earthy'))) {
+      guesses = ['Pinot Noir (Burgundy)', 'Gamay (Beaujolais)'];
+      pairings = ['roast duck', 'mushroom risotto', 'salmon'];
+    } else {
+      guesses = ['Merlot (Right Bank Bordeaux)', 'Tempranillo (Rioja)'];
+      pairings = ['roast chicken', 'charcuterie board', 'aged Comté'];
+    }
+    funFact = 'Red wine gets its colour from skin contact during fermentation — the longer the maceration, the deeper the hue.';
+  } else if (isWhite) {
+    if (w.aromas.some(a => a.includes('Citrus')) && w.acidity && w.acidity.includes('High')) {
+      guesses = ['Sauvignon Blanc (Loire/Marlborough)', 'Albariño'];
+      pairings = ['goat cheese salad', 'grilled sea bass', 'asparagus tempura'];
+    } else if (w.aromas.some(a => a.includes('Stone Fruit') || a.includes('Toast'))) {
+      guesses = ['Chardonnay (Burgundy/Napa)', 'Viognier'];
+      pairings = ['lobster thermidor', 'roast chicken with tarragon', 'creamy pasta'];
+    } else {
+      guesses = ['Riesling (Alsace/Mosel)', 'Pinot Grigio'];
+      pairings = ['Thai green curry', 'fresh oysters', 'light fish dishes'];
+    }
+    funFact = 'White wine can be made from red grapes — if the skins are removed immediately after pressing!';
+  } else if (isRose) {
+    guesses = ['Provence Rosé', 'Côtes du Rhône Rosé'];
+    pairings = ['Mediterranean mezze', 'grilled prawns', 'summer berry pavlova'];
+    funFact = 'Provence has been making rosé for over 2,600 years!';
+  } else {
+    guesses = ['Add more tasting notes for a better guess!'];
+    pairings = ['select colour and aromas to unlock pairings'];
+    funFact = 'The human nose can detect over 10,000 different aromas.';
+  }
+  
+  return `<strong>🔍 AI Guess:</strong> This could be <strong>${guesses[0]}</strong>${guesses.length > 1 ? `, or perhaps ${guesses[1]}` : ''}.
+    <br><br><strong>🍽️ Perfect Pairings:</strong> ${pairings.join(', ')}.
+    <br><br><strong>💡 Fun Fact:</strong> ${funFact}
+    ${w.score >= 8 ? '<br><br>⭐ <strong>You loved this one!</strong> A wine worth remembering.' : ''}`;
+}
+
+// ==================== SAVE & SHARE ====================
+async function saveTasting() {
+  saveCurrentState();
+  const name = document.getElementById('tasterName').value.trim();
+  if (!name) {
+    document.getElementById('tasterName').focus();
+    document.getElementById('tasterName').style.borderColor = '#E53935';
+    setTimeout(() => document.getElementById('tasterName').style.borderColor = '', 2000);
+    return;
+  }
+  
+  const w = tastingData[currentWine];
+  await saveToSharedStorage(name, currentWine, w);
+  
+  document.getElementById('savedMsg').classList.add('visible');
+  buildTabs();
+  
+  if (currentWine < NUM_WINES) {
+    setTimeout(() => {
+      switchWine(currentWine + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 1200);
+  }
+}
+
+// ==================== RESULTS ====================
+async function loadAllResults() {
+  const container = document.getElementById('resultsContainer');
+  container.innerHTML = '<p style="text-align:center; padding:30px;"><span class="loading-indicator"></span> Loading group results...</p>';
+  
+  const allResults = await loadAllSharedResults();
+  
+  if (allResults.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:var(--text-light); padding: 40px 0;">No results yet — be the first to save your tasting notes!</p>';
+    document.getElementById('tastersCount').innerHTML = '<strong>0</strong> tasters have shared notes so far';
+    return;
+  }
+  
+  // Group by wine
+  const byWine = {};
+  const allTasters = new Set();
+  
+  for (const r of allResults) {
+    if (!r.wine) continue;
+    if (!byWine[r.wine]) byWine[r.wine] = [];
+    byWine[r.wine].push(r);
+    if (r.name) allTasters.add(r.name);
+  }
+  
+  document.getElementById('tastersCount').innerHTML = `<strong>${allTasters.size}</strong> taster${allTasters.size !== 1 ? 's' : ''} have shared notes so far`;
+  
+  let html = '';
+  
+  for (let w = 1; w <= NUM_WINES; w++) {
+    const entries = byWine[w];
+    if (!entries || entries.length === 0) continue;
+    
+    // Calculate averages
+    const scores = entries.map(e => e.score || 5);
+    const avgScore = (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1);
+    
+    // Aggregate aromas and flavours
+    const aromaCount = {};
+    const flavourCount = {};
+    const colourCount = {};
+    const bodyCount = {};
+    
+    entries.forEach(e => {
+      (e.aromas || []).forEach(a => { aromaCount[a] = (aromaCount[a] || 0) + 1; });
+      (e.flavours || []).forEach(f => { flavourCount[f] = (flavourCount[f] || 0) + 1; });
+      if (e.colour) colourCount[e.colour] = (colourCount[e.colour] || 0) + 1;
+      if (e.body) bodyCount[e.body] = (bodyCount[e.body] || 0) + 1;
+    });
+    
+    const topAromas = Object.entries(aromaCount).sort((a,b) => b[1] - a[1]).slice(0, 6);
+    const topFlavours = Object.entries(flavourCount).sort((a,b) => b[1] - a[1]).slice(0, 6);
+    const topColour = Object.entries(colourCount).sort((a,b) => b[1] - a[1])[0];
+    const topBody = Object.entries(bodyCount).sort((a,b) => b[1] - a[1])[0];
+    
+    // Score distribution (1-10)
+    const scoreDist = new Array(10).fill(0);
+    scores.forEach(s => { if (s >= 1 && s <= 10) scoreDist[s-1]++; });
+    const maxCount = Math.max(...scoreDist, 1);
+    
+    html += `
+      <div class="results-summary-card">
+        <div class="results-wine-header">
+          <div class="results-wine-title">🍷 Wine ${w}</div>
+          <div class="avg-score">⭐ ${avgScore}/10</div>
+        </div>
+        
+        <div class="results-stat-row">
+          <div class="results-stat">
+            <div class="results-stat-label">Tasters</div>
+            <div class="results-stat-value">${entries.length}</div>
+          </div>
+          <div class="results-stat">
+            <div class="results-stat-label">Top Colour</div>
+            <div class="results-stat-value">${topColour ? topColour[0].replace('-', ' ') : '—'}</div>
+          </div>
+          <div class="results-stat">
+            <div class="results-stat-label">Body</div>
+            <div class="results-stat-value">${topBody ? topBody[0] : '—'}</div>
+          </div>
+        </div>
+        
+        <div class="results-bar-section">
+          <div class="results-bar-label">Score Distribution</div>
+          <div class="bar-chart" style="margin-bottom: 20px;">
+            ${scoreDist.map((count, i) => `
+              <div class="bar" style="height: ${count > 0 ? Math.max(8, (count / maxCount) * 50) : 3}px; opacity: ${count > 0 ? 1 : 0.3};">
+                <span class="bar-label">${i+1}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        
+        ${topAromas.length > 0 ? `
+          <div class="results-bar-section">
+            <div class="results-bar-label">Most Popular Aromas</div>
+            <div class="tag-cloud">
+              ${topAromas.map((a, i) => `<span class="tag ${i === 0 ? 'popular' : ''}">${a[0]} (${a[1]})</span>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+        
+        ${topFlavours.length > 0 ? `
+          <div class="results-bar-section" style="margin-top:8px;">
+            <div class="results-bar-label">Most Popular Flavours</div>
+            <div class="tag-cloud">
+              ${topFlavours.map((f, i) => `<span class="tag ${i === 0 ? 'popular' : ''}">${f[0]} (${f[1]})</span>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+        
+        <div class="individual-notes" style="margin-top: 14px;">
+          <div class="results-bar-label">Individual Notes</div>
+          ${entries.map(e => `
+            <div class="individual-note">
+              <div class="note-name">${e.name || 'Anonymous'} <span class="note-score">★ ${e.score || '?'}/10</span></div>
+              ${e.notes ? `<div class="note-detail">"${e.notes}"</div>` : ''}
+              ${(e.aromas && e.aromas.length > 0) ? `<div class="note-detail" style="margin-top:3px; font-size:0.85em; opacity:0.7;">Aromas: ${e.aromas.join(', ')}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  if (!html) {
+    html = '<p style="text-align:center; color:var(--text-light); padding: 40px 0;">No results yet — be the first to save your tasting notes!</p>';
+  }
+  
+  container.innerHTML = html;
+}
+
+// ==================== INIT ====================
+buildTabs();
+loadWineState();
+</script>
+</body>
+</html>

@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BUZZ! — Blockbusters Buzzer</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #1976D2;
+    --blue-light: #42A5F5;
+    --blue-dark: #0D47A1;
+    --white-team: #E8E8E8;
+    --white-dark: #B0B0B0;
+    --gold: #D4A020;
+    --gold-light: #E8C84A;
+    --bg-dark: #0a0e1a;
+    --berry: #6D2E46;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg-dark);
+    color: #fff;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: hidden;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* ===== SETUP SCREEN ===== */
+  .setup-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 40px 30px;
+    background: linear-gradient(180deg, #0a0e1a 0%, #16213e 100%);
+  }
+
+  .setup-screen.hidden { display: none; }
+
+  .setup-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.8em;
+    letter-spacing: 6px;
+    color: var(--gold-light);
+    margin-bottom: 6px;
+  }
+
+  .setup-sub {
+    font-size: 0.85em;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+
+  .setup-label {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.8em;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    align-self: flex-start;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .setup-input {
+    width: 100%;
+    max-width: 300px;
+    padding: 14px 18px;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.2em;
+    letter-spacing: 2px;
+    text-align: center;
+    text-transform: uppercase;
+    outline: none;
+    margin-bottom: 30px;
+  }
+
+  .setup-input:focus {
+    border-color: var(--gold);
+  }
+
+  .setup-input::placeholder {
+    color: rgba(255,255,255,0.2);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .team-picker {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+
+  .team-btn {
+    width: 130px;
+    height: 130px;
+    border-radius: 20px;
+    border: 3px solid transparent;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.85em;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .team-btn.blue-pick {
+    background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+    color: #fff;
+  }
+
+  .team-btn.white-pick {
+    background: linear-gradient(135deg, #f0f0f0, #d0d0d0);
+    color: #333;
+  }
+
+  .team-btn.selected {
+    border-color: var(--gold);
+    box-shadow: 0 0 25px rgba(212, 160, 32, 0.4);
+    transform: scale(1.05);
+  }
+
+  .team-btn .team-hex {
+    width: 45px;
+    height: 50px;
+  }
+
+  .go-btn {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4em;
+    letter-spacing: 5px;
+    padding: 14px 50px;
+    border: 2px solid var(--gold);
+    border-radius: 10px;
+    background: rgba(212, 160, 32, 0.1);
+    color: var(--gold-light);
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .go-btn:hover, .go-btn:active {
+    background: rgba(212, 160, 32, 0.25);
+    box-shadow: 0 0 20px rgba(212, 160, 32, 0.3);
+  }
+
+  .go-btn:disabled {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  /* ===== BUZZER SCREEN ===== */
+  .buzzer-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .buzzer-screen.active { display: flex; }
+
+  .buzzer-screen.blue-bg {
+    background: linear-gradient(180deg, #0D47A1 0%, #0a2a5e 50%, #061833 100%);
+  }
+
+  .buzzer-screen.white-bg {
+    background: linear-gradient(180deg, #e8e8e8 0%, #c8c8c8 50%, #a0a0a0 100%);
+  }
+
+  .buzzer-player-name {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.1em;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    opacity: 0.7;
+  }
+
+  .buzzer-team-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6em;
+    letter-spacing: 4px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+  }
+
+  .white-bg .buzzer-player-name,
+  .white-bg .buzzer-team-label {
+    color: #333;
+  }
+
+  /* THE BIG BUTTON */
+  .buzzer-btn {
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+  }
+
+  .buzzer-btn:active {
+    transform: scale(0.92);
+  }
+
+  .buzzer-btn.blue-buzz {
+    background: radial-gradient(circle at 40% 35%, #64B5F6 0%, #1976D2 40%, #0D47A1 70%, #082a5c 100%);
+    box-shadow:
+      0 8px 30px rgba(13, 71, 161, 0.6),
+      0 0 60px rgba(33, 150, 243, 0.15),
+      inset 0 -6px 15px rgba(0,0,0,0.3),
+      inset 0 6px 15px rgba(255,255,255,0.15);
+  }
+
+  .buzzer-btn.white-buzz {
+    background: radial-gradient(circle at 40% 35%, #ffffff 0%, #e8e8e8 40%, #c0c0c0 70%, #999999 100%);
+    box-shadow:
+      0 8px 30px rgba(0,0,0,0.3),
+      0 0 60px rgba(255,255,255,0.1),
+      inset 0 -6px 15px rgba(0,0,0,0.2),
+      inset 0 6px 15px rgba(255,255,255,0.5);
+  }
+
+  .buzzer-btn .buzz-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4em;
+    letter-spacing: 8px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .buzzer-btn.blue-buzz .buzz-text {
+    color: #fff;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+
+  .buzzer-btn.white-buzz .buzz-text {
+    color: #444;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+
+  .buzzer-hint {
+    margin-top: 24px;
+    font-size: 0.78em;
+    opacity: 0.35;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .white-bg .buzzer-hint { color: #555; }
+
+  /* BUZZED STATE */
+  .buzzed-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    animation: flashIn 0.15s;
+  }
+
+  .buzzed-overlay.active { display: flex; }
+
+  .buzzed-overlay.blue-buzzed {
+    background: radial-gradient(circle, #1976D2 0%, #0D47A1 50%, #061833 100%);
+  }
+
+  .buzzed-overlay.white-buzzed {
+    background: radial-gradient(circle, #ffffff 0%, #e0e0e0 50%, #b0b0b0 100%);
+  }
+
+  @keyframes flashIn {
+    0% { opacity: 0; transform: scale(1.3); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .buzzed-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.5em;
+    letter-spacing: 8px;
+    animation: buzzPulse 0.6s ease-in-out infinite alternate;
+  }
+
+  .blue-buzzed .buzzed-name { color: #fff; }
+  .white-buzzed .buzzed-name { color: #333; }
+
+  @keyframes buzzPulse {
+    from { transform: scale(1); text-shadow: 0 0 20px rgba(255,255,255,0.3); }
+    to { transform: scale(1.05); text-shadow: 0 0 40px rgba(255,255,255,0.6); }
+  }
+
+  .buzzed-label {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.3em;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+
+  .blue-buzzed .buzzed-label { color: var(--gold-light); }
+  .white-buzzed .buzzed-label { color: var(--gold); }
+
+  .buzzed-time {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85em;
+    margin-top: 16px;
+    opacity: 0.5;
+  }
+
+  .white-buzzed .buzzed-time { color: #666; }
+
+  .reset-btn {
+    margin-top: 36px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.9em;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 12px 30px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    background: transparent;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .white-buzzed .reset-btn {
+    border-color: rgba(0,0,0,0.2);
+    color: rgba(0,0,0,0.4);
+  }
+
+  .reset-btn:active {
+    background: rgba(255,255,255,0.1);
+  }
+
+  /* Ring animation on buzz */
+  .buzz-ring {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 4px solid;
+    opacity: 0;
+    z-index: 99;
+    pointer-events: none;
+  }
+
+  .buzz-ring.animate {
+    animation: ringExpand 0.8s ease-out forwards;
+  }
+
+  .buzz-ring.blue-ring { border-color: var(--blue-light); }
+  .buzz-ring.white-ring { border-color: #ccc; }
+
+  @keyframes ringExpand {
+    0% { width: 100px; height: 100px; opacity: 0.8; }
+    100% { width: 600px; height: 600px; opacity: 0; }
+  }
+
+  /* Back button */
+  .back-btn {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.75em;
+    color: rgba(255,255,255,0.3);
+    background: none;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    padding: 5px 12px;
+    cursor: pointer;
+    z-index: 10;
+  }
+
+  .white-bg .back-btn {
+    color: rgba(0,0,0,0.3);
+    border-color: rgba(0,0,0,0.15);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== SETUP ===== -->
+<div class="setup-screen" id="setupScreen">
+  <div class="setup-title">BLOCKBUSTERS</div>
+  <div class="setup-sub">Buzzer</div>
+
+  <div class="setup-label">Your Name</div>
+  <input class="setup-input" id="playerName" type="text" placeholder="Enter your name..." maxlength="15" autocomplete="off">
+
+  <div class="setup-label">Your Team</div>
+  <div class="team-picker">
+    <div class="team-btn blue-pick" id="pickBlue" onclick="pickTeam('blue')">
+      <svg class="team-hex" viewBox="0 0 50 56">
+        <polygon points="25,2 47,15 47,41 25,54 3,41 3,15" fill="#1976D2" stroke="#0D47A1" stroke-width="2"/>
+      </svg>
+      BLUE
+    </div>
+    <div class="team-btn white-pick" id="pickWhite" onclick="pickTeam('white')">
+      <svg class="team-hex" viewBox="0 0 50 56">
+        <polygon points="25,2 47,15 47,41 25,54 3,41 3,15" fill="#f0f0f0" stroke="#b0b0b0" stroke-width="2"/>
+      </svg>
+      WHITE
+    </div>
+  </div>
+
+  <button class="go-btn" id="goBtn" onclick="startBuzzer()" disabled>READY</button>
+</div>
+
+<!-- ===== BUZZER ===== -->
+<div class="buzzer-screen" id="buzzerScreen">
+  <button class="back-btn" onclick="goBack()">&larr; Setup</button>
+  <div class="buzzer-player-name" id="displayName"></div>
+  <div class="buzzer-team-label" id="displayTeam"></div>
+
+  <button class="buzzer-btn" id="buzzerBtn" onclick="buzz()">
+    <span class="buzz-text">BUZZ!</span>
+  </button>
+
+  <div class="buzzer-hint">Tap to buzz in!</div>
+</div>
+
+<!-- ===== BUZZED OVERLAY ===== -->
+<div class="buzzed-overlay" id="buzzedOverlay">
+  <div class="buzzed-name" id="buzzedName"></div>
+  <div class="buzzed-label">BUZZED IN!</div>
+  <div class="buzzed-time" id="buzzedTime"></div>
+  <button class="reset-btn" onclick="resetBuzzer()">TAP TO RESET</button>
+</div>
+
+<script>
+let selectedTeam = null;
+let playerNameVal = '';
+let buzzAudioCtx = null;
+
+// Unlock audio on first touch anywhere (iOS requirement)
+function ensureAudio() {
+  if (!buzzAudioCtx) {
+    buzzAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (buzzAudioCtx.state === 'suspended') {
+    buzzAudioCtx.resume();
+  }
+}
+
+// Unlock on any touch/click
+document.addEventListener('touchstart', ensureAudio, { once: false });
+document.addEventListener('click', ensureAudio, { once: false });
+
+// Team selection
+function pickTeam(team) {
+  selectedTeam = team;
+  document.getElementById('pickBlue').classList.toggle('selected', team === 'blue');
+  document.getElementById('pickWhite').classList.toggle('selected', team === 'white');
+  checkReady();
+}
+
+// Check if ready
+document.getElementById('playerName').addEventListener('input', checkReady);
+
+function checkReady() {
+  const name = document.getElementById('playerName').value.trim();
+  document.getElementById('goBtn').disabled = !(name && selectedTeam);
+}
+
+// Start buzzer
+function startBuzzer() {
+  playerNameVal = document.getElementById('playerName').value.trim().toUpperCase();
+  
+  // Make sure audio is ready
+  ensureAudio();
+  // Play a silent tone to fully unlock iOS audio
+  if (buzzAudioCtx) {
+    const osc = buzzAudioCtx.createOscillator();
+    const gain = buzzAudioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(buzzAudioCtx.destination);
+    gain.gain.setValueAtTime(0.001, buzzAudioCtx.currentTime);
+    osc.start(buzzAudioCtx.currentTime);
+    osc.stop(buzzAudioCtx.currentTime + 0.05);
+  }
+  
+  document.getElementById('setupScreen').classList.add('hidden');
+  
+  const buzzerScreen = document.getElementById('buzzerScreen');
+  buzzerScreen.classList.add('active');
+  buzzerScreen.classList.add(selectedTeam === 'blue' ? 'blue-bg' : 'white-bg');
+  
+  const btn = document.getElementById('buzzerBtn');
+  btn.classList.add(selectedTeam === 'blue' ? 'blue-buzz' : 'white-buzz');
+  
+  document.getElementById('displayName').textContent = playerNameVal;
+  document.getElementById('displayTeam').textContent = selectedTeam === 'blue' ? 'TEAM BLUE' : 'TEAM WHITE';
+}
+
+// THE BUZZ
+function buzz() {
+  // Vibrate
+  if (navigator.vibrate) {
+    navigator.vibrate([100, 50, 200]);
+  }
+  
+  // Ensure audio is unlocked and play sound
+  ensureAudio();
+  playBuzzSound();
+  
+  // Show ring animation
+  const ring = document.createElement('div');
+  ring.className = `buzz-ring ${selectedTeam === 'blue' ? 'blue-ring' : 'white-ring'} animate`;
+  document.body.appendChild(ring);
+  setTimeout(() => ring.remove(), 1000);
+  
+  // Show overlay
+  const overlay = document.getElementById('buzzedOverlay');
+  overlay.className = `buzzed-overlay active ${selectedTeam === 'blue' ? 'blue-buzzed' : 'white-buzzed'}`;
+  
+  document.getElementById('buzzedName').textContent = playerNameVal;
+  
+  const now = new Date();
+  const ms = now.getMilliseconds().toString().padStart(3, '0');
+  document.getElementById('buzzedTime').textContent = 
+    `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}.${ms}`;
+}
+
+// Sound
+function playBuzzSound() {
+  if (!buzzAudioCtx) return;
+  if (buzzAudioCtx.state === 'suspended') {
+    buzzAudioCtx.resume();
+  }
+  
+  const now = buzzAudioCtx.currentTime;
+  
+  // Classic game show "BING!" - bright, metallic, exciting
+  // Layer 1: Main bell tone (sine for purity)
+  const bell = buzzAudioCtx.createOscillator();
+  const bellGain = buzzAudioCtx.createGain();
+  bell.connect(bellGain);
+  bellGain.connect(buzzAudioCtx.destination);
+  bell.type = 'sine';
+  bell.frequency.setValueAtTime(1200, now);
+  bell.frequency.exponentialRampToValueAtTime(800, now + 0.4);
+  bellGain.gain.setValueAtTime(0.6, now);
+  bellGain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+  bell.start(now);
+  bell.stop(now + 0.5);
+  
+  // Layer 2: Bright harmonic overtone
+  const shimmer = buzzAudioCtx.createOscillator();
+  const shimmerGain = buzzAudioCtx.createGain();
+  shimmer.connect(shimmerGain);
+  shimmerGain.connect(buzzAudioCtx.destination);
+  shimmer.type = 'sine';
+  shimmer.frequency.setValueAtTime(2400, now);
+  shimmer.frequency.exponentialRampToValueAtTime(1600, now + 0.3);
+  shimmerGain.gain.setValueAtTime(0.25, now);
+  shimmerGain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+  shimmer.start(now);
+  shimmer.stop(now + 0.35);
+  
+  // Layer 3: Punchy attack click (short noise burst for that "hit" feel)
+  const click = buzzAudioCtx.createOscillator();
+  const clickGain = buzzAudioCtx.createGain();
+  click.connect(clickGain);
+  clickGain.connect(buzzAudioCtx.destination);
+  click.type = 'square';
+  click.frequency.setValueAtTime(1800, now);
+  click.frequency.setValueAtTime(900, now + 0.02);
+  clickGain.gain.setValueAtTime(0.5, now);
+  clickGain.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
+  click.start(now);
+  click.stop(now + 0.06);
+  
+  // Layer 4: Second "ding" slightly delayed (the classic double-hit)
+  const bell2 = buzzAudioCtx.createOscillator();
+  const bell2Gain = buzzAudioCtx.createGain();
+  bell2.connect(bell2Gain);
+  bell2Gain.connect(buzzAudioCtx.destination);
+  bell2.type = 'sine';
+  bell2.frequency.setValueAtTime(1500, now + 0.12);
+  bell2.frequency.exponentialRampToValueAtTime(1000, now + 0.55);
+  bell2Gain.gain.setValueAtTime(0.0001, now);
+  bell2Gain.gain.linearRampToValueAtTime(0.45, now + 0.12);
+  bell2Gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+  bell2.start(now);
+  bell2.stop(now + 0.6);
+  
+  // Layer 5: Sub bass thump for weight
+  const bass = buzzAudioCtx.createOscillator();
+  const bassGain = buzzAudioCtx.createGain();
+  bass.connect(bassGain);
+  bassGain.connect(buzzAudioCtx.destination);
+  bass.type = 'sine';
+  bass.frequency.setValueAtTime(150, now);
+  bass.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+  bassGain.gain.setValueAtTime(0.4, now);
+  bassGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+  bass.start(now);
+  bass.stop(now + 0.2);
+}
+
+// Reset
+function resetBuzzer() {
+  document.getElementById('buzzedOverlay').className = 'buzzed-overlay';
+}
+
+// Back to setup
+function goBack() {
+  document.getElementById('buzzerScreen').className = 'buzzer-screen';
+  document.getElementById('buzzerBtn').className = 'buzzer-btn';
+  document.getElementById('setupScreen').classList.remove('hidden');
+  document.getElementById('buzzedOverlay').className = 'buzzed-overlay';
+}
+</script>
+</body>
+</html>
