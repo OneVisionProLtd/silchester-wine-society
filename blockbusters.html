@@ -148,49 +148,38 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
     background: var(--bg-main);
-    /* Subtle texture */
     background-image: 
       radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.05) 0%, transparent 50%),
       radial-gradient(ellipse at 70% 60%, rgba(0,0,0,0.05) 0%, transparent 50%);
+    padding: 10px;
+  }
+
+  /* Wrapper that holds edge strips flush against the grid */
+  .board-wrapper {
+    display: inline-grid;
+    grid-template-columns: auto auto auto;
+    grid-template-rows: auto auto auto;
+    align-items: center;
+    justify-items: center;
+    gap: 4px;
   }
 
   /* Edge indicators */
-  .edge-strip {
-    position: absolute;
-    z-index: 2;
-  }
+  .edge-strip { display: flex; }
 
-  /* Blue goes left→right: left/right edge strips are vertical (one hex per row) */
-  .edge-strip.left, .edge-strip.right {
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .edge-strip.left { left: 6px; }
-  .edge-strip.right { right: 6px; }
-
-  /* White goes top→bottom: top/bottom edge strips are horizontal (one hex per col) */
-  .edge-strip.top, .edge-strip.bottom {
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: row;
-    gap: 4px;
-  }
-  .edge-strip.top { top: 6px; }
-  .edge-strip.bottom { bottom: 6px; }
+  .edge-strip.left  { grid-column: 1; grid-row: 2; flex-direction: column; gap: 2px; align-items: center; }
+  .edge-strip.right { grid-column: 3; grid-row: 2; flex-direction: column; gap: 2px; align-items: center; }
+  .edge-strip.top   { grid-column: 2; grid-row: 1; flex-direction: row;    gap: 2px; align-items: center; }
+  .edge-strip.bottom{ grid-column: 2; grid-row: 3; flex-direction: row;    gap: 2px; align-items: center; }
+  .hex-grid         { grid-column: 2; grid-row: 2; }
 
   .edge-hex {
-    width: 30px;
-    height: 34px;
-    position: relative;
+    width: 36px;
+    height: 30px;
   }
 
-  .edge-hex svg { width: 100%; height: 100%; }
+  .edge-hex svg { width: 100%; height: 100%; display: block; }
 
   .edge-hex.blue polygon { fill: var(--blue-fill); stroke: var(--blue-border); stroke-width: 2; }
   .edge-hex.white polygon { fill: var(--white-fill); stroke: var(--white-border); stroke-width: 2; }
@@ -738,14 +727,13 @@
   </div>
 
   <div class="board-area">
-    <!-- Blue edge strips (left & right for blue team's left-to-right path) -->
-    <div class="edge-strip left" id="edgeLeft"></div>
-    <div class="edge-strip right" id="edgeRight"></div>
-    <!-- White edge strips (top & bottom for white team's top-to-bottom path) -->
-    <div class="edge-strip top" id="edgeTop"></div>
-    <div class="edge-strip bottom" id="edgeBottom"></div>
-
-    <div class="hex-grid" id="hexGrid"></div>
+    <div class="board-wrapper">
+      <div class="edge-strip top" id="edgeTop"></div>
+      <div class="edge-strip left" id="edgeLeft"></div>
+      <div class="hex-grid" id="hexGrid"></div>
+      <div class="edge-strip right" id="edgeRight"></div>
+      <div class="edge-strip bottom" id="edgeBottom"></div>
+    </div>
   </div>
 
   <div class="controls-bar">
@@ -932,9 +920,8 @@ function hexSVG(state) {
 }
 
 function miniHexSVG(color) {
-  const fill = color === 'blue' ? '#1976D2' : '#FFFFFF';
-  const stroke = color === 'blue' ? '#0D47A1' : '#B0BEC5';
-  return `<svg viewBox="0 0 30 34"><polygon points="15,1 28,9 28,25 15,33 2,25 2,9" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/></svg>`;
+  const fill = color === 'blue' ? '#1976D2' : '#ECEFF1';
+  return `<svg viewBox="0 0 30 26" style="display:block"><polygon points="0,13 7,0 23,0 30,13 23,26 7,26" fill="${fill}"/></svg>`;
 }
 
 // ===================== BUILD BOARD =====================
