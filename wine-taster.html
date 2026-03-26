@@ -1032,8 +1032,7 @@ for (let i = 1; i <= NUM_WINES; i++) {
 
 // ==================== PERSISTENT STORAGE ====================
 // Uses jsonblob.com as a shared REST store (free, no auth, CORS-friendly)
-const BLOB_ID = '019d2a1a-7333-7b49-8db7-6f38e8a1ad6f';
-const BLOB_URL = `https://jsonblob.com/api/jsonBlob/${BLOB_ID}`;
+const BLOB_URL = 'https://silchester-wine.loca.lt/api/wine/';
 
 async function saveToSharedStorage(tasterName, wineNum, data) {
   try {
