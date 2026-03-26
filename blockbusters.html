@@ -166,10 +166,10 @@
 
   .edge-strip { display: block; }
 
-  .edge-strip.left   { grid-column: 1; grid-row: 2; margin-right: -30px; z-index: 1; }
-  .edge-strip.right  { grid-column: 3; grid-row: 2; margin-left:  -30px; z-index: 1; }
-  .edge-strip.top    { grid-column: 2; grid-row: 1; margin-bottom: -26px; z-index: 1; }
-  .edge-strip.bottom { grid-column: 2; grid-row: 3; margin-top:   -26px; z-index: 1; }
+  .edge-strip.left   { grid-column: 1; grid-row: 2; margin-right: -30px; z-index: 1; align-self: center; }
+  .edge-strip.right  { grid-column: 3; grid-row: 2; margin-left:  -30px; z-index: 1; align-self: center; }
+  .edge-strip.top    { grid-column: 2; grid-row: 1; margin-bottom: -2px; z-index: 1; }
+  .edge-strip.bottom { grid-column: 2; grid-row: 3; margin-top:   -2px; z-index: 1; }
 
   .hex-grid { grid-column: 2; grid-row: 2; z-index: 2; }
 
@@ -966,48 +966,60 @@ function buildBoard() {
   buildEdgeStrips();
 }
 
-const HEX_W = 104, HEX_H = 90, COL_OFFSET = 45, ROW_OVERLAP = 30;
+const HEX_W = 104, HEX_H = 90, COL_OVERLAP = 30, COL_OFFSET = 45;
+// Horizontal step between columns
+const COL_STEP = HEX_W - COL_OVERLAP; // 74px
+// Vertical step between hexes in a column (slight overlap to close gaps)
+const ROW_STEP = HEX_H - 2; // 88px
 
 function buildEdgeStrips() {
-  // White top/bottom: one hex per column, alternating vertical offset to match column stagger
-  ['edgeTop', 'edgeBottom'].forEach((id, side) => {
-    const el = document.getElementById(id);
-    el.innerHTML = '';
-    el.style.position = 'relative';
-    el.style.height = (HEX_H + COL_OFFSET) + 'px';
-    el.style.width = (COLS * (HEX_W - ROW_OVERLAP) + ROW_OVERLAP) + 'px';
-    for (let c = 0; c < COLS; c++) {
-      const h = document.createElement('div');
-      h.className = 'edge-hex white';
-      h.innerHTML = edgeHexSVG('white');
-      const isEven = c % 2 === 1;
-      const x = c * (HEX_W - ROW_OVERLAP);
-      // Even columns offset down (matching board); top strip flips for bottom
-      const y = side === 0
-        ? (isEven ? COL_OFFSET : 0)       // top: odd cols raised, even cols dropped
-        : (isEven ? 0 : COL_OFFSET);      // bottom: mirror
-      h.style.position = 'absolute';
-      h.style.left = x + 'px';
-      h.style.top = y + 'px';
-      el.appendChild(h);
-    }
-  });
+  // ---- WHITE TOP/BOTTOM ----
+  // One hex per column. Odd columns (1,3) drop down by COL_OFFSET to match board stagger.
+  // Top strip: odd cols are LOWER (pushed toward board), even cols HIGHER
+  // Bottom strip: mirror — odd cols HIGHER (pushed toward board), even cols LOWER
+  const topWidth  = COLS * COL_STEP + COL_OVERLAP;
+  const topHeight = HEX_H + COL_OFFSET;
 
-  // Blue left/right: ROWS+1 hexes, offset like an even column (shifted down by half)
+  const edgeTop = document.getElementById('edgeTop');
+  edgeTop.innerHTML = '';
+  edgeTop.style.cssText = `position:relative; width:${topWidth}px; height:${topHeight}px;`;
+  for (let c = 0; c < COLS; c++) {
+    const h = document.createElement('div');
+    h.className = 'edge-hex white';
+    h.innerHTML = edgeHexSVG('white');
+    const x = c * COL_STEP;
+    const y = (c % 2 === 0) ? 0 : COL_OFFSET; // odd cols sit lower (toward board)
+    h.style.cssText = `position:absolute; left:${x}px; top:${y}px; width:${HEX_W}px; height:${HEX_H}px;`;
+    edgeTop.appendChild(h);
+  }
+
+  const edgeBottom = document.getElementById('edgeBottom');
+  edgeBottom.innerHTML = '';
+  edgeBottom.style.cssText = `position:relative; width:${topWidth}px; height:${topHeight}px;`;
+  for (let c = 0; c < COLS; c++) {
+    const h = document.createElement('div');
+    h.className = 'edge-hex white';
+    h.innerHTML = edgeHexSVG('white');
+    const x = c * COL_STEP;
+    const y = (c % 2 === 0) ? COL_OFFSET : 0; // even cols sit lower (toward board)
+    h.style.cssText = `position:absolute; left:${x}px; top:${y}px; width:${HEX_W}px; height:${HEX_H}px;`;
+    edgeBottom.appendChild(h);
+  }
+
+  // ---- BLUE LEFT/RIGHT ----
+  // ROWS+1 hexes in a column, offset down by COL_OFFSET/2 to interleave with board rows
+  const blueCount  = ROWS + 1;
+  const blueHeight = (blueCount - 1) * ROW_STEP + HEX_H;
+
   ['edgeLeft', 'edgeRight'].forEach(id => {
     const el = document.getElementById(id);
     el.innerHTML = '';
-    el.style.position = 'relative';
-    el.style.width = HEX_W + 'px';
-    const count = ROWS + 1;
-    el.style.height = (count * (HEX_H - 2) - 2) + 'px';
-    for (let r = 0; r < count; r++) {
+    el.style.cssText = `position:relative; width:${HEX_W}px; height:${blueHeight}px;`;
+    for (let r = 0; r < blueCount; r++) {
       const h = document.createElement('div');
       h.className = 'edge-hex blue';
       h.innerHTML = edgeHexSVG('blue');
-      h.style.position = 'absolute';
-      h.style.left = '0';
-      h.style.top = (r * (HEX_H - 2)) + 'px';
+      h.style.cssText = `position:absolute; left:0; top:${r * ROW_STEP}px; width:${HEX_W}px; height:${HEX_H}px;`;
       el.appendChild(h);
     }
   });
