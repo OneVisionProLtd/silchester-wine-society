@@ -208,13 +208,13 @@
   .hex-col {
     display: flex;
     flex-direction: column;
-    margin-left: -18px; /* overlap columns horizontally */
+    margin-left: -26px; /* overlap = hex_width * 0.25 */
   }
 
   .hex-col:first-child { margin-left: 0; }
 
   .hex-col:nth-child(even) {
-    margin-top: 52px; /* offset even columns down by half a hex height */
+    margin-top: 45px; /* offset even columns down by half a hex height */
   }
 
   .hexagon {
@@ -223,7 +223,7 @@
     position: relative;
     cursor: pointer;
     transition: transform 0.15s ease, filter 0.15s ease;
-    margin-bottom: 4px;
+    margin-bottom: -2px; /* close vertical gaps */
     filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.3));
   }
 
