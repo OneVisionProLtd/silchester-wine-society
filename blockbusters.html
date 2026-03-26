@@ -203,23 +203,23 @@
   .hex-row {
     display: flex;
     justify-content: center;
-    margin-top: -26px;
+    margin-top: -29px;
   }
 
   .hex-row:first-child { margin-top: 0; }
 
   .hex-row:nth-child(even) {
-    margin-left: 49px;
+    margin-left: 50px;
   }
 
   .hexagon {
-    width: 94px;
-    height: 104px;
+    width: 100px;
+    height: 116px;
     position: relative;
     cursor: pointer;
     transition: transform 0.15s ease, filter 0.15s ease;
-    margin: 0 -1px;
-    filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.25));
+    margin: 0;
+    filter: drop-shadow(0px 3px 4px rgba(0,0,0,0.3));
   }
 
   .hexagon:hover {
@@ -755,8 +755,8 @@
   <div class="question-panel">
     <div class="q-letter-box">
       <svg viewBox="0 0 80 90">
-        <polygon points="40,2 76,24 76,66 40,88 4,66 4,24" fill="url(#goldGrad)" stroke="#8B6914" stroke-width="3"/>
-        <polygon points="40,8 70,27 70,63 40,82 10,63 10,27" fill="url(#goldShine)" opacity="0.3"/>
+        <polygon points="40,0 80,22 80,68 40,90 0,68 0,22" fill="url(#goldGrad)"/>
+        <polygon points="40,7 73,25 73,65 40,83 7,65 7,25" fill="url(#goldShine)" opacity="0.3"/>
       </svg>
       <span class="q-letter-text" id="qLetter">P</span>
     </div>
@@ -898,26 +898,32 @@ let blueScore = 0, whiteScore = 0;
 let editingTeam = null;
 
 // ===================== HEX SVG BUILDER =====================
+// Hex points for a perfect pointy-top hexagon filling 100x116 viewBox
+// Points: top, top-right, bot-right, bottom, bot-left, top-left
+const HEX_PTS  = "50,0 100,29 100,87 50,116 0,87 0,29";
+const HEX_IN   = "50,8 92,31 92,85 50,108 8,85 8,31";
+const HEX_TOP  = "50,8 92,31 92,58 50,58 8,58 8,31";
+
 function hexSVG(state) {
   if (state === 'blue') {
-    return `<svg viewBox="0 0 100 110">
-      <polygon points="50,3 95,27 95,83 50,107 5,83 5,27" fill="#0D47A1" stroke="#0A3170" stroke-width="3"/>
-      <polygon points="50,10 88,30 88,80 50,100 12,80 12,30" fill="url(#blueGrad)"/>
-      <polygon points="50,10 88,30 88,55 50,55 12,55 12,30" fill="#64B5F6" opacity="0.2"/>
+    return `<svg viewBox="0 0 100 116" style="display:block;">
+      <polygon points="${HEX_PTS}" fill="#0D47A1"/>
+      <polygon points="${HEX_IN}" fill="url(#blueGrad)"/>
+      <polygon points="${HEX_TOP}" fill="#64B5F6" opacity="0.2"/>
     </svg>`;
   }
   if (state === 'white') {
-    return `<svg viewBox="0 0 100 110">
-      <polygon points="50,3 95,27 95,83 50,107 5,83 5,27" fill="#B0BEC5" stroke="#90A4AE" stroke-width="3"/>
-      <polygon points="50,10 88,30 88,80 50,100 12,80 12,30" fill="url(#whiteGrad)"/>
-      <polygon points="50,10 88,30 88,55 50,55 12,55 12,30" fill="#ffffff" opacity="0.3"/>
+    return `<svg viewBox="0 0 100 116" style="display:block;">
+      <polygon points="${HEX_PTS}" fill="#B0BEC5"/>
+      <polygon points="${HEX_IN}" fill="url(#whiteGrad)"/>
+      <polygon points="${HEX_TOP}" fill="#ffffff" opacity="0.3"/>
     </svg>`;
   }
   // Default gold
-  return `<svg viewBox="0 0 100 110">
-    <polygon points="50,3 95,27 95,83 50,107 5,83 5,27" fill="#8B6914" stroke="#6B5010" stroke-width="2"/>
-    <polygon points="50,8 90,29 90,81 50,102 10,81 10,29" fill="url(#goldGrad)"/>
-    <polygon points="50,8 90,29 90,55 50,55 10,55 10,29" fill="url(#goldShine)"/>
+  return `<svg viewBox="0 0 100 116" style="display:block;">
+    <polygon points="${HEX_PTS}" fill="#8B6914"/>
+    <polygon points="${HEX_IN}" fill="url(#goldGrad)"/>
+    <polygon points="${HEX_TOP}" fill="url(#goldShine)"/>
   </svg>`;
 }
 
