@@ -1031,24 +1031,15 @@ for (let i = 1; i <= NUM_WINES; i++) {
 }
 
 // ==================== PERSISTENT STORAGE ====================
-// Uses a single shared key to store ALL tasting results (avoids list() issues)
-const STORAGE_KEY = 'silchester-spring-flavours-2026';
+// Uses jsonblob.com as a shared REST store (free, no auth, CORS-friendly)
+const BLOB_ID = '019d2a1a-7333-7b49-8db7-6f38e8a1ad6f';
+const BLOB_URL = `https://jsonblob.com/api/jsonBlob/${BLOB_ID}`;
 
 async function saveToSharedStorage(tasterName, wineNum, data) {
-  if (!window.storage) return;
   try {
     // Load existing results first
-    let allResults = [];
-    try {
-      const existing = await window.storage.get(STORAGE_KEY, true);
-      if (existing && existing.value) {
-        allResults = JSON.parse(existing.value);
-      }
-    } catch (e) {
-      // Key doesn't exist yet, start fresh
-      allResults = [];
-    }
-    
+    let allResults = await loadAllSharedResults();
+
     // Create new entry
     const entry = {
       name: tasterName,
@@ -1066,30 +1057,32 @@ async function saveToSharedStorage(tasterName, wineNum, data) {
       notes: data.notes,
       timestamp: new Date().toISOString()
     };
-    
+
     // Remove any previous entry from same person for same wine
-    allResults = allResults.filter(r => 
+    allResults = allResults.filter(r =>
       !(r.name === tasterName && r.wine === wineNum)
     );
-    
+
     // Add new entry
     allResults.push(entry);
-    
+
     // Save back
-    await window.storage.set(STORAGE_KEY, JSON.stringify(allResults), true);
+    await fetch(BLOB_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ results: allResults })
+    });
   } catch (e) {
     console.error('Storage save error:', e);
   }
 }
 
 async function loadAllSharedResults() {
-  if (!window.storage) return [];
   try {
-    const result = await window.storage.get(STORAGE_KEY, true);
-    if (result && result.value) {
-      return JSON.parse(result.value);
-    }
-    return [];
+    const res = await fetch(BLOB_URL);
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.results || [];
   } catch (e) {
     // Key doesn't exist yet — that's fine
     console.log('No results stored yet');

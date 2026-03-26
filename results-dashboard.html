@@ -482,18 +482,16 @@ const NUM_WINES = 8;
 let countdown = 10;
 
 // ==================== LOAD FROM SHARED STORAGE ====================
-const STORAGE_KEY = 'silchester-spring-flavours-2026';
+const BLOB_ID = '019d2a1a-7333-7b49-8db7-6f38e8a1ad6f';
+const BLOB_URL = `https://jsonblob.com/api/jsonBlob/${BLOB_ID}`;
 
 async function loadAllSharedResults() {
-  if (!window.storage) return [];
   try {
-    const result = await window.storage.get(STORAGE_KEY, true);
-    if (result && result.value) {
-      return JSON.parse(result.value);
-    }
-    return [];
+    const res = await fetch(BLOB_URL);
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.results || [];
   } catch (e) {
-    // Key doesn't exist yet — that's fine
     console.log('No results stored yet');
     return [];
   }
