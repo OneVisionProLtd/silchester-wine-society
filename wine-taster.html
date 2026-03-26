@@ -979,6 +979,15 @@
           <label>Personal Notes</label>
           <textarea class="notes-area" id="personalNotes" placeholder="Any other thoughts? What food would you pair this with?"></textarea>
         </div>
+        <div class="select-group" style="margin-top: 16px;">
+          <label>💰 Guess the Price</label>
+          <div style="display:flex; align-items:center; gap:12px; margin-top:8px;">
+            <span style="font-size:1.2em; color:var(--wine-red); font-weight:600;">£</span>
+            <input type="number" id="priceGuess" min="1" max="100" step="0.5" placeholder="e.g. 12.50"
+              style="flex:1; padding:12px 16px; border:1.5px solid rgba(139,26,74,0.2); border-radius:12px; font-size:1em; font-family:'Outfit',sans-serif; background:var(--card); color:var(--text-dark); outline:none;"
+              oninput="saveCurrentState()">
+          </div>
+        </div>
       </div>
 
       <!-- AI Insight -->
@@ -1021,13 +1030,13 @@
 
 <script>
 // ==================== STATE ====================
-const NUM_WINES = 8;
+const NUM_WINES = 6;
 let currentWine = 1;
 let tastingData = {};
 let currentMode = 'tasting';
 
 for (let i = 1; i <= NUM_WINES; i++) {
-  tastingData[i] = { colour:'', noseIntensity:'', aromas:[], sweetness:'', acidity:'', tannin:'', body:'', finish:'', flavours:[], score:5, notes:'', aiInsight:'' };
+  tastingData[i] = { colour:'', noseIntensity:'', aromas:[], sweetness:'', acidity:'', tannin:'', body:'', finish:'', flavours:[], score:5, notes:'', aiInsight:'', priceGuess:'' };
 }
 
 // ==================== PERSISTENT STORAGE ====================
@@ -1054,6 +1063,7 @@ async function saveToSharedStorage(tasterName, wineNum, data) {
       flavours: data.flavours,
       score: data.score,
       notes: data.notes,
+      priceGuess: data.priceGuess ? parseFloat(data.priceGuess) : null,
       timestamp: new Date().toISOString()
     };
 
@@ -1111,7 +1121,8 @@ function buildTabs() {
     const hasData = tastingData[i].colour || tastingData[i].aromas.length > 0 || tastingData[i].notes;
     tab.className = `wine-tab ${i === currentWine ? 'active' : ''} ${hasData ? 'has-data' : ''}`;
     tab.onclick = () => switchWine(i);
-    tab.innerHTML = `<span class="wine-num">${i}</span> Wine ${i}`;
+    const wineShortNames = ['','Crémant','Côtes du Rhône','Nero d\'Avola','Touriga','Balbo Malbec','Co-op Malbec'];
+    tab.innerHTML = `<span class="wine-num">${i}</span> ${wineShortNames[i]}`;
     tabs.appendChild(tab);
   }
 }
@@ -1134,6 +1145,7 @@ function saveCurrentState() {
   w.finish = document.getElementById('finish').value;
   w.score = parseInt(document.getElementById('overallScore').value);
   w.notes = document.getElementById('personalNotes').value;
+  w.priceGuess = document.getElementById('priceGuess').value;
   
   w.aromas = [];
   document.querySelectorAll('#aromaChips .chip.selected').forEach(c => {
@@ -1159,6 +1171,7 @@ function loadWineState() {
   document.getElementById('overallScore').value = w.score || 5;
   document.getElementById('scoreValue').textContent = w.score || 5;
   document.getElementById('personalNotes').value = w.notes || '';
+  document.getElementById('priceGuess').value = w.priceGuess || '';
   
   document.querySelectorAll('#aromaChips .chip').forEach(c => {
     const text = c.textContent.replace('✓ ', '');

@@ -478,7 +478,7 @@
 <div class="refresh-timer" id="refreshTimer">Next refresh: 10s</div>
 
 <script>
-const NUM_WINES = 8;
+const NUM_WINES = 6;
 let countdown = 10;
 
 // ==================== LOAD FROM SHARED STORAGE ====================
@@ -548,28 +548,48 @@ async function refreshDashboard() {
       count: scores.length
     };
   }).sort((a,b) => b.avg - a.avg);
-  
+
+  // Wine metadata
+  const WINES = {
+    1: { name: 'Crémant de Loire', shop: 'ALDI 🥂', region: 'France', price: 8.99 },
+    2: { name: 'Côtes du Rhône', shop: 'Sainsbury\'s 🍷', region: 'France', price: 9.00 },
+    3: { name: 'Nero d\'Avola', shop: 'Tesco 🍷', region: 'Italy', price: 8.50 },
+    4: { name: 'Touriga Franca', shop: 'Waitrose 🍷', region: 'Portugal', price: 9.25 },
+    5: { name: 'Balbo Signature Malbec', shop: 'M&S 🍷', region: 'Argentina', price: 14.00 },
+    6: { name: 'Fairtrade Organic Malbec', shop: 'Co-op 🍷', region: 'Argentina', price: 8.65 },
+  };
+
+  // Leaderboard
   if (wineRanking.length > 1) {
     document.getElementById('leaderboard').style.display = 'block';
-    document.getElementById('leaderboardRows').innerHTML = wineRanking.map((w, i) => `
-      <div class="leaderboard-row">
-        <div class="leaderboard-rank">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</div>
-        <div class="leaderboard-wine">Wine ${w.wine}</div>
-        <div style="font-size: 0.78em; color: var(--text-light);">${w.count} ratings</div>
-        <div class="leaderboard-score">${w.avg.toFixed(1)}</div>
-      </div>
-    `).join('');
+    document.getElementById('leaderboardRows').innerHTML = wineRanking.map((w, i) => {
+      const meta = WINES[w.wine] || {};
+      return `
+        <div class="leaderboard-row">
+          <div class="leaderboard-rank">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</div>
+          <div class="leaderboard-wine">${meta.name || 'Wine ' + w.wine}</div>
+          <div style="font-size: 0.78em; color: var(--text-light);">${w.count} ratings</div>
+          <div class="leaderboard-score">${w.avg.toFixed(1)}</div>
+        </div>
+      `;
+    }).join('');
   }
-  
+
   // Wine cards
   let cardsHtml = '';
   
   for (let wNum = 1; wNum <= NUM_WINES; wNum++) {
     const entries = byWine[wNum];
     if (!entries || entries.length === 0) continue;
+    const meta = WINES[wNum] || {};
     
     const scores = entries.map(e => e.score || 5);
     const avgScore = (scores.reduce((a,b) => a+b, 0) / scores.length).toFixed(1);
+    
+    // Price guesses
+    const priceGuesses = entries.map(e => e.priceGuess).filter(p => p != null && !isNaN(p));
+    const avgGuess = priceGuesses.length > 0 ? (priceGuesses.reduce((a,b) => a+b, 0) / priceGuesses.length).toFixed(2) : null;
+    const actualPrice = meta.price;
     
     // Aggregate
     const aromaCount = {}, flavourCount = {}, colourCount = {};
@@ -590,10 +610,29 @@ async function refreshDashboard() {
     cardsHtml += `
       <div class="wine-result-card" style="animation-delay: ${wNum * 0.1}s">
         <div class="wine-card-header">
-          <div class="wine-card-title"><span class="wine-emoji">🍷</span> Wine ${wNum}</div>
+          <div class="wine-card-title"><span class="wine-emoji">${wNum === 1 ? '🥂' : '🍷'}</span> Wine ${wNum} — ${meta.name || ''}</div>
           <div class="avg-score-big">★ ${avgScore}</div>
         </div>
+        <div style="font-size:0.78em; color:var(--text-light); margin-bottom:4px;">${meta.shop || ''} · ${meta.region || ''}</div>
         <div class="taster-count">${entries.length} rating${entries.length !== 1 ? 's' : ''}</div>
+        
+        ${avgGuess !== null ? `
+        <div style="background:rgba(212,168,70,0.08); border:1px solid rgba(212,168,70,0.25); border-radius:12px; padding:12px 16px; margin:14px 0; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+          <div style="text-align:center; flex:1;">
+            <div style="font-size:0.7em; color:var(--text-light); letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;">Group's Guess</div>
+            <div style="font-size:1.5em; font-weight:700; color:var(--gold);">£${avgGuess}</div>
+          </div>
+          <div style="font-size:1.3em; color:var(--text-light);">vs</div>
+          <div style="text-align:center; flex:1;">
+            <div style="font-size:0.7em; color:var(--text-light); letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;">Actual Price</div>
+            <div style="font-size:1.5em; font-weight:700; color:var(--wine-rose);">£${actualPrice.toFixed(2)}</div>
+          </div>
+          <div style="text-align:center; flex:1;">
+            <div style="font-size:0.7em; color:var(--text-light); letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;">Off By</div>
+            <div style="font-size:1.5em; font-weight:700; color:${Math.abs(avgGuess - actualPrice) <= 1.5 ? '#4CAF50' : '#E53935'};">${avgGuess > actualPrice ? '+' : ''}£${(avgGuess - actualPrice).toFixed(2)}</div>
+          </div>
+        </div>
+        ` : ''}
         
         <div class="score-bars">
           ${scoreDist.map((count, i) => `
