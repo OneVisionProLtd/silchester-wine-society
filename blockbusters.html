@@ -272,6 +272,27 @@
     animation: hexPop 0.4s ease-out;
   }
 
+  /* Selected hex — pulsing white glow for board display */
+  .hexagon.selected {
+    filter: drop-shadow(0 0 12px rgba(255,255,255,0.9)) drop-shadow(0 0 6px rgba(255,220,50,0.8));
+    animation: hexPulse 1s ease-in-out infinite alternate;
+    z-index: 20;
+  }
+  @keyframes hexPulse {
+    from { filter: drop-shadow(0 0 8px rgba(255,255,255,0.7)) drop-shadow(0 0 4px rgba(255,220,50,0.6)); }
+    to   { filter: drop-shadow(0 0 18px rgba(255,255,255,1)) drop-shadow(0 0 10px rgba(255,220,50,1)); }
+  }
+
+  /* Board display mode — hide host controls, go fullscreen */
+  .board-display-mode .controls-bar,
+  .board-display-mode .team-panel .team-direction,
+  .board-display-mode .question-overlay { display: none !important; }
+  .board-display-mode { flex-direction: column; }
+  .board-display-mode .board-area { flex: 1; }
+  .board-display-mode .teams-bar { justify-content: center; gap: 80px; }
+  .board-display-mode .team-score-num { font-size: 4em; }
+  .board-display-mode .team-name-display { font-size: 1.4em; pointer-events: none; }
+
   @keyframes hexPop {
     0% { transform: scale(1); }
     40% { transform: scale(1.15); }
@@ -1000,6 +1021,61 @@ const ROWS = 4, COLS = 5;
 let hexStates = {};
 let boardLetters = [];
 let currentTurn = 'blue';
+
+// ===================== SYNC SETUP =====================
+const BLOCKS_URL = 'https://simplified-molecular-cologne-christina.trycloudflare.com/api/blockbusters/';
+const IS_BOARD = new URLSearchParams(window.location.search).has('board');
+
+async function pushState() {
+  if (IS_BOARD) return; // board view only reads
+  try {
+    await fetch(BLOCKS_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hexStates, selectedHex: currentHexId, currentTurn, blueScore, whiteScore, boardLetters })
+    });
+  } catch (e) { console.warn('Sync error:', e); }
+}
+
+let lastServerUpdate = 0;
+
+async function pollState() {
+  if (!IS_BOARD) return;
+  try {
+    const res = await fetch(BLOCKS_URL);
+    const state = await res.json();
+    if (!state.boardLetters || !state.boardLetters.length) return;
+    if (state.lastUpdate === lastServerUpdate) return; // no change
+    lastServerUpdate = state.lastUpdate;
+
+    const needsRebuild = JSON.stringify(boardLetters) !== JSON.stringify(state.boardLetters);
+    boardLetters = state.boardLetters;
+    hexStates = state.hexStates || {};
+    blueScore = state.blueScore || 0;
+    whiteScore = state.whiteScore || 0;
+    currentTurn = state.currentTurn || 'blue';
+    const selectedHex = state.selectedHex || null;
+
+    if (needsRebuild) buildBoard(); // rebuild grid with correct letters
+    renderBoardFromState(selectedHex);
+    updateScores();
+  } catch (e) {}
+}
+
+function renderBoardFromState(selectedHex) {
+  for (let c = 0; c < COLS; c++) {
+    for (let r = 0; r < ROWS; r++) {
+      const hid = `${r}-${c}`;
+      const hex = document.getElementById(`hex-${hid}`);
+      if (!hex) continue;
+      const letter = boardLetters[r * COLS + c] || '';
+      const state = (hexStates[hid] && hexStates[hid] !== 'default') ? hexStates[hid] : 'default';
+      const isSelected = selectedHex === hid && state === 'default';
+      hex.className = `hexagon ${state}${isSelected ? ' selected' : ''}`;
+      hex.innerHTML = hexSVG(state) + `<span class="hex-letter">${letter}</span>`;
+    }
+  }
+}
 let currentHexId = null;
 let blueScore = 0, whiteScore = 0;
 let editingTeam = null;
@@ -1078,6 +1154,7 @@ function buildBoard() {
   }
 
   buildEdgeStrips();
+  if (!IS_BOARD) pushState();
 }
 
 const HEX_W = 104, HEX_H = 90, COL_OVERLAP = 30, COL_OFFSET = 45;
@@ -1150,6 +1227,16 @@ function buildEdgeStrips() {
 
 // ===================== GAME LOGIC =====================
 function startGame() {
+  if (IS_BOARD) {
+    // Board-only display mode — skip welcome, show board, start polling
+    document.getElementById('welcome').classList.add('hidden');
+    document.getElementById('mainApp').style.display = 'flex';
+    document.getElementById('mainApp').classList.add('board-display-mode');
+    buildBoard(); // build empty board first, then poll will fill it
+    setInterval(pollState, 1500); // poll every 1.5s
+    pollState();
+    return;
+  }
   document.getElementById('welcome').classList.add('hidden');
   document.getElementById('mainApp').style.display = 'flex';
   buildBoard();
@@ -1157,8 +1244,14 @@ function startGame() {
 }
 
 function clickHex(hid, letter) {
+  if (IS_BOARD) return; // board display is read-only
   if (hexStates[hid] !== 'default') return;
   currentHexId = hid;
+  // Highlight the selected hex on the board display
+  document.querySelectorAll('.hexagon').forEach(h => h.classList.remove('selected'));
+  const hex = document.getElementById(`hex-${hid}`);
+  if (hex) hex.classList.add('selected');
+  pushState();
   showQuestion(letter);
 }
 
@@ -1219,6 +1312,7 @@ function awardHex(team) {
 
   currentTurn = team === 'blue' ? 'white' : 'blue';
   updateTurnIndicator();
+  pushState();
 }
 
 function closeQuestion() {
@@ -1316,7 +1410,7 @@ function launchConfetti() {
 // ===================== CONTROLS =====================
 function resetBoard() { Object.keys(usedQuestions).forEach(k => delete usedQuestions[k]); buildBoard(); }
 function resetScores() { blueScore = 0; whiteScore = 0; updateScores(); buildBoard(); }
-function toggleTurn() { currentTurn = currentTurn === 'blue' ? 'white' : 'blue'; updateTurnIndicator(); }
+function toggleTurn() { currentTurn = currentTurn === 'blue' ? 'white' : 'blue'; updateTurnIndicator(); pushState(); }
 
 // ===================== TEAM NAMES =====================
 function editTeamName(team) {
@@ -1356,6 +1450,11 @@ function buildWelcomeHexes() {
 }
 
 buildWelcomeHexes();
+
+// Auto-start board display mode
+if (IS_BOARD) {
+  startGame();
+}
 </script>
 </body>
 </html>
