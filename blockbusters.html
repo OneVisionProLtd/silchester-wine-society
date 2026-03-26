@@ -1048,13 +1048,26 @@ function clickHex(hid, letter) {
   showQuestion(letter);
 }
 
+const usedQuestions = {}; // tracks used question indices per letter
+
 function showQuestion(letter) {
   const qs = wineQuestions[letter];
   if (!qs || !qs.length) {
     showQuestionUI(letter, `What '${letter}' is a wine term you know?`, letter + '...', 'Ask the host!');
     return;
   }
-  const q = qs[Math.floor(Math.random() * qs.length)];
+  if (!usedQuestions[letter]) usedQuestions[letter] = new Set();
+  const used = usedQuestions[letter];
+  // Get unused indices
+  let available = qs.map((_, i) => i).filter(i => !used.has(i));
+  // If all used, reset (cycle round)
+  if (available.length === 0) {
+    used.clear();
+    available = qs.map((_, i) => i);
+  }
+  const idx = available[Math.floor(Math.random() * available.length)];
+  used.add(idx);
+  const q = qs[idx];
   showQuestionUI(letter, q.q, q.a, q.fact);
 }
 
@@ -1187,7 +1200,7 @@ function launchConfetti() {
 }
 
 // ===================== CONTROLS =====================
-function resetBoard() { buildBoard(); }
+function resetBoard() { Object.keys(usedQuestions).forEach(k => delete usedQuestions[k]); buildBoard(); }
 function resetScores() { blueScore = 0; whiteScore = 0; updateScores(); buildBoard(); }
 function toggleTurn() { currentTurn = currentTurn === 'blue' ? 'white' : 'blue'; updateTurnIndicator(); }
 
