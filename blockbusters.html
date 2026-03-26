@@ -168,8 +168,8 @@
 
   .edge-strip.left   { grid-column: 1; grid-row: 2; margin-right: -30px; z-index: 1; align-self: start; }
   .edge-strip.right  { grid-column: 3; grid-row: 2; margin-left:  -30px; z-index: 1; align-self: start; }
-  .edge-strip.top    { grid-column: 2; grid-row: 1; margin-bottom: -90px; z-index: 1; }
-  .edge-strip.bottom { grid-column: 2; grid-row: 3; margin-top:   -44px; z-index: 1; }
+  .edge-strip.top    { grid-column: 2; grid-row: 1; margin-bottom: -45px; z-index: 1; }
+  .edge-strip.bottom { grid-column: 2; grid-row: 3; margin-top:   -45px; z-index: 1; }
 
   .hex-grid { grid-column: 2; grid-row: 2; z-index: 2; }
 
@@ -991,9 +991,9 @@ function buildEdgeStrips() {
     h.className = 'edge-hex white';
     h.innerHTML = edgeHexSVG('white');
     const x = c * COL_STEP;
-    // Even cols: hex bottom = container bottom (flush with board even-col top at 0)
-    // Odd cols:  hex bottom = container bottom - COL_OFFSET (flush with board odd-col top at 45)
-    const y = (c % 2 === 0) ? COL_OFFSET : 0;
+    // Even cols (0,2,4): board top at y=0 → hex sits HIGH in container → y=0
+    // Odd cols  (1,3):   board top at y=45 → hex sits LOW in container  → y=COL_OFFSET
+    const y = (c % 2 === 0) ? 0 : COL_OFFSET;
     h.style.cssText = `position:absolute; left:${x}px; top:${y}px; width:${HEX_W}px; height:${HEX_H}px;`;
     edgeTop.appendChild(h);
   }
