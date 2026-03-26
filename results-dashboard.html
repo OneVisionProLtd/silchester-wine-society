@@ -610,10 +610,10 @@ async function refreshDashboard() {
     cardsHtml += `
       <div class="wine-result-card" style="animation-delay: ${wNum * 0.1}s">
         <div class="wine-card-header">
-          <div class="wine-card-title"><span class="wine-emoji">${wNum === 1 ? '🥂' : '🍷'}</span> Wine ${wNum} — ${meta.name || ''}</div>
+          <div class="wine-card-title"><span class="wine-emoji">${wNum === 1 ? '🥂' : '🍷'}</span> Wine ${wNum}${entries.length > 0 ? ` — ${meta.name || ''}` : ''}</div>
           <div class="avg-score-big">★ ${avgScore}</div>
         </div>
-        <div style="font-size:0.78em; color:var(--text-light); margin-bottom:4px;">${meta.shop || ''} · ${meta.region || ''}</div>
+        ${entries.length > 0 ? `<div style="font-size:0.78em; color:var(--text-light); margin-bottom:4px;">${meta.shop || ''} · ${meta.region || ''}</div>` : ''}
         <div class="taster-count">${entries.length} rating${entries.length !== 1 ? 's' : ''}</div>
         
         ${avgGuess !== null ? `

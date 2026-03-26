@@ -1115,8 +1115,7 @@ function buildTabs() {
     const hasData = tastingData[i].colour || tastingData[i].aromas.length > 0 || tastingData[i].notes;
     tab.className = `wine-tab ${i === currentWine ? 'active' : ''} ${hasData ? 'has-data' : ''}`;
     tab.onclick = () => switchWine(i);
-    const wineShortNames = ['','Crémant','Côtes du Rhône','Nero d\'Avola','Touriga','Balbo Malbec','Co-op Malbec'];
-    tab.innerHTML = `<span class="wine-num">${i}</span> ${wineShortNames[i]}`;
+    tab.innerHTML = `<span class="wine-num">${i}</span> Wine ${i}`;
     tabs.appendChild(tab);
   }
 }
