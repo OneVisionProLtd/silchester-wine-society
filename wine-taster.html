@@ -979,14 +979,17 @@
           <label>Personal Notes</label>
           <textarea class="notes-area" id="personalNotes" placeholder="Any other thoughts? What food would you pair this with?"></textarea>
         </div>
-        <div class="select-group" style="margin-top: 16px;">
-          <label>💰 Guess the Price</label>
-          <div style="display:flex; align-items:center; gap:12px; margin-top:8px;">
-            <span style="font-size:1.2em; color:var(--wine-red); font-weight:600;">£</span>
-            <input type="number" id="priceGuess" min="1" max="100" step="0.5" placeholder="e.g. 12.50"
-              style="flex:1; padding:12px 16px; border:1.5px solid rgba(139,26,74,0.2); border-radius:12px; font-size:1em; font-family:'Outfit',sans-serif; background:var(--card); color:var(--text-dark); outline:none;"
-              oninput="saveCurrentState()">
-          </div>
+      </div>
+
+      <!-- Price Guess -->
+      <div class="tasting-card" style="border-left: 4px solid var(--gold);">
+        <div class="card-title"><span class="icon">💰</span> Guess the Price</div>
+        <p style="font-size:0.85em; color:var(--text-light); margin-bottom:14px;">How much do you think this bottle costs?</p>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="font-size:1.4em; color:var(--gold); font-weight:700;">£</span>
+          <input type="number" id="priceGuess" min="1" max="100" step="0.5" placeholder="e.g. 12.50"
+            style="flex:1; padding:14px 16px; border:2px solid rgba(212,168,70,0.4); border-radius:14px; font-size:1.1em; font-family:'Outfit',sans-serif; background:rgba(212,168,70,0.05); color:var(--text-dark); outline:none;"
+            oninput="saveCurrentState()">
         </div>
       </div>
 
