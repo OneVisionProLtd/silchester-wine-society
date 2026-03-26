@@ -155,30 +155,61 @@
     padding: 10px;
   }
 
-  /* Wrapper that holds edge strips flush against the grid */
+  /* Wrapper: 3×3 grid — edge strips surround the hex grid */
   .board-wrapper {
     display: inline-grid;
     grid-template-columns: auto auto auto;
     grid-template-rows: auto auto auto;
     align-items: center;
     justify-items: center;
-    gap: 4px;
   }
 
-  /* Edge indicators */
   .edge-strip { display: flex; }
 
-  .edge-strip.left  { grid-column: 1; grid-row: 2; flex-direction: column; gap: 2px; align-items: center; }
-  .edge-strip.right { grid-column: 3; grid-row: 2; flex-direction: column; gap: 2px; align-items: center; }
-  .edge-strip.top   { grid-column: 2; grid-row: 1; flex-direction: row;    gap: 2px; align-items: center; }
-  .edge-strip.bottom{ grid-column: 2; grid-row: 3; flex-direction: row;    gap: 2px; align-items: center; }
-  .hex-grid         { grid-column: 2; grid-row: 2; }
-
-  .edge-hex {
-    width: 36px;
-    height: 30px;
+  /* Left/right: vertical column of hexes with same column overlap */
+  .edge-strip.left  {
+    grid-column: 1; grid-row: 2;
+    flex-direction: column;
+    margin-right: -30px; /* overlap into grid */
+  }
+  .edge-strip.right {
+    grid-column: 3; grid-row: 2;
+    flex-direction: column;
+    margin-left: -30px;
+  }
+  .edge-strip.left .edge-hex,
+  .edge-strip.right .edge-hex {
+    margin-bottom: -2px;
   }
 
+  /* Top/bottom: horizontal row of hexes with same row overlap */
+  .edge-strip.top   {
+    grid-column: 2; grid-row: 1;
+    flex-direction: row;
+    margin-bottom: -26px;
+  }
+  .edge-strip.bottom {
+    grid-column: 2; grid-row: 3;
+    flex-direction: row;
+    margin-top: -26px;
+  }
+  .edge-strip.top .edge-hex,
+  .edge-strip.bottom .edge-hex {
+    margin-right: -30px;
+  }
+  .edge-strip.top .edge-hex:last-child,
+  .edge-strip.bottom .edge-hex:last-child {
+    margin-right: 0;
+  }
+
+  .hex-grid { grid-column: 2; grid-row: 2; }
+
+  /* Edge hexes — same size as board hexes */
+  .edge-hex {
+    width: 104px;
+    height: 90px;
+    flex-shrink: 0;
+  }
   .edge-hex svg { width: 100%; height: 100%; display: block; }
 
   .edge-hex.blue polygon { fill: var(--blue-fill); stroke: var(--blue-border); stroke-width: 2; }
@@ -919,9 +950,15 @@ function hexSVG(state) {
   </svg>`;
 }
 
-function miniHexSVG(color) {
-  const fill = color === 'blue' ? '#1976D2' : '#ECEFF1';
-  return `<svg viewBox="0 0 30 26" style="display:block"><polygon points="0,13 7,0 23,0 30,13 23,26 7,26" fill="${fill}"/></svg>`;
+function edgeHexSVG(color) {
+  const fills = { blue: '#1565C0', white: '#ECEFF1' };
+  const inner = { blue: '#1976D2', white: '#FFFFFF' };
+  const f = fills[color] || fills.white;
+  const fi = inner[color] || inner.white;
+  return `<svg viewBox="0 0 120 104" style="display:block;width:100%;height:100%;">
+    <polygon points="0,52 30,0 90,0 120,52 90,104 30,104" fill="${f}"/>
+    <polygon points="6,52 33,7 87,7 114,52 87,97 33,97" fill="${fi}" opacity="0.7"/>
+  </svg>`;
 }
 
 // ===================== BUILD BOARD =====================
@@ -961,25 +998,25 @@ function buildBoard() {
 }
 
 function buildEdgeStrips() {
-  // White edges: top and bottom (5 hexes each, for white's top-to-bottom path)
+  // White top/bottom: one hex per column (same column count)
   ['edgeTop', 'edgeBottom'].forEach(id => {
     const el = document.getElementById(id);
     el.innerHTML = '';
-    for (let i = 0; i < COLS; i++) {
+    for (let c = 0; c < COLS; c++) {
       const h = document.createElement('div');
       h.className = 'edge-hex white';
-      h.innerHTML = miniHexSVG('white');
+      h.innerHTML = edgeHexSVG('white');
       el.appendChild(h);
     }
   });
-  // Blue edges: left and right (4 hexes each, for blue's left-to-right path)
+  // Blue left/right: one hex per row (same row count)
   ['edgeLeft', 'edgeRight'].forEach(id => {
     const el = document.getElementById(id);
     el.innerHTML = '';
-    for (let i = 0; i < ROWS; i++) {
+    for (let r = 0; r < ROWS; r++) {
       const h = document.createElement('div');
       h.className = 'edge-hex blue';
-      h.innerHTML = miniHexSVG('blue');
+      h.innerHTML = edgeHexSVG('blue');
       el.appendChild(h);
     }
   });
