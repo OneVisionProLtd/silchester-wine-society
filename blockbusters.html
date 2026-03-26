@@ -1130,8 +1130,8 @@ function generateLetters() {
 function buildBoard() {
   const grid = document.getElementById('hexGrid');
   grid.innerHTML = '';
-  boardLetters = generateLetters();
-  hexStates = {};
+  if (!IS_BOARD) boardLetters = generateLetters(); // host generates; board receives via sync
+  if (!IS_BOARD) hexStates = {};
 
   // Flat-top layout: iterate columns first, then rows within each column
   for (let c = 0; c < COLS; c++) {
@@ -1143,11 +1143,13 @@ function buildBoard() {
       const hid = `${r}-${c}`;
       hexStates[hid] = 'default';
 
+      if (!IS_BOARD) hexStates[hid] = 'default';
       const hex = document.createElement('div');
-      hex.className = 'hexagon default';
+      const initState = hexStates[hid] || 'default';
+      hex.className = `hexagon ${initState}`;
       hex.id = `hex-${hid}`;
       hex.onclick = () => clickHex(hid, letter);
-      hex.innerHTML = hexSVG('default') + `<span class="hex-letter">${letter}</span>`;
+      hex.innerHTML = hexSVG(initState) + `<span class="hex-letter">${letter}</span>`;
       col.appendChild(hex);
     }
     grid.appendChild(col);
