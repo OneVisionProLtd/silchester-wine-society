@@ -166,9 +166,9 @@
 
   .edge-strip { display: block; }
 
-  .edge-strip.left   { grid-column: 1; grid-row: 2; margin-right: -30px; z-index: 1; align-self: center; }
-  .edge-strip.right  { grid-column: 3; grid-row: 2; margin-left:  -30px; z-index: 1; align-self: center; }
-  .edge-strip.top    { grid-column: 2; grid-row: 1; margin-bottom: -44px; z-index: 1; }
+  .edge-strip.left   { grid-column: 1; grid-row: 2; margin-right: -30px; z-index: 1; align-self: start; }
+  .edge-strip.right  { grid-column: 3; grid-row: 2; margin-left:  -30px; z-index: 1; align-self: start; }
+  .edge-strip.top    { grid-column: 2; grid-row: 1; margin-bottom: -90px; z-index: 1; }
   .edge-strip.bottom { grid-column: 2; grid-row: 3; margin-top:   -44px; z-index: 1; }
 
   .hex-grid { grid-column: 2; grid-row: 2; z-index: 2; }
@@ -967,59 +967,68 @@ function buildBoard() {
 }
 
 const HEX_W = 104, HEX_H = 90, COL_OVERLAP = 30, COL_OFFSET = 45;
-// Horizontal step between columns
-const COL_STEP = HEX_W - COL_OVERLAP; // 74px
-// Vertical step between hexes in a column (slight overlap to close gaps)
-const ROW_STEP = HEX_H - 2; // 88px
+const COL_STEP = HEX_W - COL_OVERLAP; // 74px — horizontal step between columns
+const ROW_STEP = HEX_H - 2;           // 88px — vertical step between rows in a column
+// Board total height = COL_OFFSET + (ROWS-1)*ROW_STEP + HEX_H = 45+264+90 = 399px
+const BOARD_H = COL_OFFSET + (ROWS - 1) * ROW_STEP + HEX_H;
+const BOARD_W = (COLS - 1) * COL_STEP + HEX_W;
 
 function buildEdgeStrips() {
-  // ---- WHITE TOP/BOTTOM ----
-  // One hex per column. Odd columns (1,3) drop down by COL_OFFSET to match board stagger.
-  // Top strip: odd cols are LOWER (pushed toward board), even cols HIGHER
-  // Bottom strip: mirror — odd cols HIGHER (pushed toward board), even cols LOWER
-  const topWidth  = COLS * COL_STEP + COL_OVERLAP;
-  const topHeight = HEX_H + COL_OFFSET;
+  // ---- WHITE TOP strip ----
+  // Even cols (0,2,4): board row starts at y=0 → white hex bottom aligns with board top → y = -(HEX_H) in absolute terms.
+  // In the container (anchored at top of board): even col y = 0 means hex BOTTOM is at container y=HEX_H.
+  // We want hex BOTTOM flush with board top (y=0 of board) for even cols → hex top = -HEX_H in board space.
+  // Odd cols board top = COL_OFFSET=45 → white hex bottom = 45 → hex top = 45-HEX_H = -45 in board space.
+  // Container top = -HEX_H from board top. Heights: even hex top in container = 0, odd = HEX_H-COL_OFFSET = 45.
+  const topStripH = HEX_H + COL_OFFSET; // 135px container, top = -HEX_H from board
+  const stripW = BOARD_W;
 
   const edgeTop = document.getElementById('edgeTop');
   edgeTop.innerHTML = '';
-  edgeTop.style.cssText = `position:relative; width:${topWidth}px; height:${topHeight}px;`;
+  edgeTop.style.cssText = `position:relative; width:${stripW}px; height:${topStripH}px;`;
   for (let c = 0; c < COLS; c++) {
     const h = document.createElement('div');
     h.className = 'edge-hex white';
     h.innerHTML = edgeHexSVG('white');
     const x = c * COL_STEP;
-    const y = (c % 2 === 0) ? 0 : COL_OFFSET; // odd cols sit lower (toward board)
+    // Even cols: hex bottom = container bottom (flush with board even-col top at 0)
+    // Odd cols:  hex bottom = container bottom - COL_OFFSET (flush with board odd-col top at 45)
+    const y = (c % 2 === 0) ? COL_OFFSET : 0;
     h.style.cssText = `position:absolute; left:${x}px; top:${y}px; width:${HEX_W}px; height:${HEX_H}px;`;
     edgeTop.appendChild(h);
   }
 
+  // ---- WHITE BOTTOM strip ----
+  // Even cols board bottom = (ROWS-1)*ROW_STEP + HEX_H = 264+90 = 354.
+  // Odd cols board bottom = COL_OFFSET + (ROWS-1)*ROW_STEP + HEX_H = 399 = BOARD_H.
+  // Container top = 354 (even col board bottom). Even col hex top in container = 0.
+  // Odd col hex top in container = (BOARD_H - 354) = 45.
   const edgeBottom = document.getElementById('edgeBottom');
   edgeBottom.innerHTML = '';
-  edgeBottom.style.cssText = `position:relative; width:${topWidth}px; height:${topHeight}px;`;
+  edgeBottom.style.cssText = `position:relative; width:${stripW}px; height:${topStripH}px;`;
   for (let c = 0; c < COLS; c++) {
     const h = document.createElement('div');
     h.className = 'edge-hex white';
     h.innerHTML = edgeHexSVG('white');
     const x = c * COL_STEP;
-    const y = (c % 2 === 0) ? COL_OFFSET : 0; // even cols sit lower (toward board)
+    const y = (c % 2 === 0) ? 0 : COL_OFFSET;
     h.style.cssText = `position:absolute; left:${x}px; top:${y}px; width:${HEX_W}px; height:${HEX_H}px;`;
     edgeBottom.appendChild(h);
   }
 
-  // ---- BLUE LEFT/RIGHT ----
-  // ROWS+1 hexes in a column, offset down by COL_OFFSET/2 to interleave with board rows
-  const blueCount  = ROWS + 1;
-  const blueHeight = (blueCount - 1) * ROW_STEP + HEX_H;
-
+  // ---- BLUE LEFT/RIGHT strips ----
+  // Blue = an odd column: starts at COL_OFFSET, ROWS hexes with ROW_STEP spacing.
+  // Total height = BOARD_H so it aligns exactly with board.
   ['edgeLeft', 'edgeRight'].forEach(id => {
     const el = document.getElementById(id);
     el.innerHTML = '';
-    el.style.cssText = `position:relative; width:${HEX_W}px; height:${blueHeight}px;`;
-    for (let r = 0; r < blueCount; r++) {
+    el.style.cssText = `position:relative; width:${HEX_W}px; height:${BOARD_H}px;`;
+    for (let r = 0; r < ROWS; r++) {
       const h = document.createElement('div');
       h.className = 'edge-hex blue';
       h.innerHTML = edgeHexSVG('blue');
-      h.style.cssText = `position:absolute; left:0; top:${r * ROW_STEP}px; width:${HEX_W}px; height:${HEX_H}px;`;
+      const top = COL_OFFSET + r * ROW_STEP; // 45, 133, 221, 309
+      h.style.cssText = `position:absolute; left:0; top:${top}px; width:${HEX_W}px; height:${HEX_H}px;`;
       el.appendChild(h);
     }
   });
